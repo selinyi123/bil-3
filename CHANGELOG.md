@@ -1,0 +1,21 @@
+# Changelog
+
+## v1.4.0
+
+### Fixed
+
+- Corrected Unicode Braille physical 4x2 matrix mapping.
+- Added matrix decode path for encode/decode validation.
+- Added regression tests for the official 8-dot Unicode bit layout.
+- Aligned README and package version.
+
+### Added
+
+- Expanded README with CLI usage, Python API usage, output types, validation layer, and project direction.
+- Added `ROADMAP.md` for V1.4 through V3.0 planning.
+- Added `docs/CODE_AUDIT.md` with fixed findings and remaining risks.
+- Expanded project design documentation.
+
+### Notes
+
+This release branch focuses on correctness and project foundation rather than adding large new rendering features.
