@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.9.0
+
+### Added
+
+- Added ASCII charset presets: `standard`, `dense`, `blocks`, and `binary`.
+- Added optional HTML ASCII export with monospace browser preview.
+- Added ASCII tone and edge quality metrics in `ascii_render.quality`.
+- Added Braille density target control before dithering.
+- Added Braille tile seam diagnostics under `braille_quality`.
+- Added CLI options for ASCII presets, HTML export, and Braille target density.
+- Added tests for ASCII presets, HTML output, density control, and seam diagnostics.
+
+### Changed
+
+- Updated render report schema to `1.9`.
+- Updated package version to `1.9.0`.
+- Expanded project positioning from multi-symbol rendering to quality-controlled visual-symbol encoding.
+
 ## v1.8.0
 
 ### Added
