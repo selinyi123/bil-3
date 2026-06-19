@@ -1,21 +1,14 @@
 # Version Plan
 
-## v1.2 completed scope
+## v1.3 completed scope
 
-- Added `metrics.py`.
-- Added MSE, PSNR, edge score, occupancy, and local density metrics.
-- Added `quality_metrics` to JSON reports.
-- Added report schema version `1.2`.
-- Added metrics unit tests.
-- Added report metrics integration test.
-- Added metrics documentation.
-
-## v1.3 tactile export layer
-
-- Add tactile.py.
-- Model richer tactile geometry.
-- Add SVG export.
-- Add printer and material presets.
+- Added tactile geometry helpers.
+- Added SVG tactile dot-layout export.
+- Added optional API and CLI SVG output.
+- Added `tactile_geometry` and `tactile_export` report fields.
+- Updated report schema version to `1.3`.
+- Added tactile export tests.
+- Added tactile export documentation.
 
 ## v1.4 performance layer
 
@@ -27,6 +20,7 @@
 
 - Add region-aware processing.
 - Add line-art, text, and natural-image presets.
+- Add per-region quality reports.
 
 ## v2.0 product layer
 
