@@ -14,6 +14,10 @@ pip install -e ".[dev]"
 braille-dotmatrix --width-cells 80
 ```
 
-## v1.1.1
+## Current version
 
-This release adds CI, license metadata, smoke tests, weighted tile blending, and screen output support.
+v1.1.2
+
+## Docs
+
+See `docs/API.md`, `docs/PROJECT_DESIGN.md`, `docs/VERSION_PLAN.md`, and `docs/RESEARCH.md`.
