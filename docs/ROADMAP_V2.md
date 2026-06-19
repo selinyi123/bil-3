@@ -1,22 +1,22 @@
 # Roadmap V2
 
-This roadmap moves the project from a renderer into a semantic tactile graphics engine.
+This roadmap moves the project from a Braille-only renderer into a multi-symbol visual encoding engine and then into a semantic tactile graphics engine.
 
-## v1.7.1 — Chromatic and benchmark consistency
+## v1.8.0 — ASCII and Braille enhancement
 
-- Add `CHROMATIC` rendering mode for colored screen output.
-- Add benchmark CSV generation.
-- Keep schema version stable at `1.7` for the v1.7.x line.
-- Verify CLI smoke paths for tactile, chromatic, and benchmark runs.
+- Add `ASCII_MONO` and `ASCII_COLOR` rendering modes.
+- Add edge-aware Braille sampling enhancement before dithering.
+- Add CLI smoke paths for ASCII output.
+- Keep JSON reports explicit about `ascii_render` and `braille_enhancement`.
 
-## v1.8.0 — Benchmark CI hardening
+## v1.9.0 — Benchmark CI hardening
 
 - Upload benchmark CSV as a GitHub Actions artifact.
 - Add a small benchmark smoke job that runs only on synthetic images.
 - Track runtime, RSS peak, occupancy, and basic quality metrics.
 - Establish baseline thresholds to detect severe regressions.
 
-## v1.9.0 — Rasterizer performance
+## v1.10.0 — Rasterizer performance
 
 - Replace PIL ellipse loops with an OpenCV or NumPy kernel rasterizer.
 - Add a fast path for dense dot grids.
@@ -37,5 +37,5 @@ This roadmap moves the project from a renderer into a semantic tactile graphics 
 
 ## v3.0.0 — Visual Semantic Encoding Layer
 
-- Export a visual semantic graph alongside Braille/SVG/PNG outputs.
-- Treat Braille as one renderer of a general visual semantic runtime.
+- Export a visual semantic graph alongside Braille/SVG/PNG/ASCII outputs.
+- Treat Braille and ASCII as renderers of a general visual semantic runtime.
