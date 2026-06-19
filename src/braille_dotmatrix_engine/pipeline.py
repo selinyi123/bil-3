@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 from .ascii_backend import write_ascii_output
 from .braille_enhance import enhance_sampled_values
+from .braille_quality import analyze_braille_quality, apply_density_control
 from .config import BrailleArtConfig
 from .dither import correct_over_dense_regions, select_best_dither
 from .metrics import compute_quality_metrics
@@ -38,9 +39,9 @@ def _prepare_outputs(*paths):
             Path(path).parent.mkdir(parents=True, exist_ok=True)
 
 
-def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.png', output_txt='output_braille.txt', report_json='render_report.json', output_svg=None):
+def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.png', output_txt='output_braille.txt', report_json='render_report.json', output_svg=None, output_html=None):
     start = time.time()
-    _prepare_outputs(output_png, output_txt, report_json, output_svg)
+    _prepare_outputs(output_png, output_txt, report_json, output_svg, output_html)
     img = cv2.imread(str(image_path))
     if img is None:
         raise FileNotFoundError(f'Image not found: {image_path}')
@@ -52,8 +53,10 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
     if cfg.invert_luminance:
         values = 1.0 - values
     values = enhance_sampled_values(values, cfg)
+    values, density_control = apply_density_control(values, cfg)
     method, binary = select_best_dither(values, cfg.dither_candidates)
     binary = correct_over_dense_regions(binary, cfg)
+    braille_quality = analyze_braille_quality(binary, cfg)
     tactile_validation = validate_tactile_output(binary, cfg)
     if cfg.mode == 'TACTILE' and bool(getattr(cfg, 'strict_tactile_validation', False)) and not tactile_validation['compliant']:
         raise ValueError('tactile validation failed: ' + json.dumps(tactile_validation['issues'], ensure_ascii=False))
@@ -62,7 +65,8 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
     ascii_report = None
     chromatic_report = None
     if cfg.mode in {'ASCII_MONO', 'ASCII_COLOR'}:
-        ascii_report = write_ascii_output(img, cfg, output_txt, color=(cfg.mode == 'ASCII_COLOR'))
+        html_target = output_html if (output_html is not None or bool(getattr(cfg, 'ascii_html', False))) else None
+        ascii_report = write_ascii_output(img, cfg, output_txt, color=(cfg.mode == 'ASCII_COLOR'), html_path=html_target)
         render_braille_png(binary, cfg, output_png)
     else:
         Path(output_txt).write_text(braille_text, encoding='utf-8')
@@ -73,7 +77,7 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
     svg_report = export_svg(binary, cfg, output_svg) if output_svg is not None else None
     raster_check = raster_roundtrip_check(binary, output_png, cfg) if cfg.mode == 'TACTILE' else {'ok': None, 'skipped': 'non-tactile mode uses antialias/glow/color/text'}
     report = {
-        'schema_version': '1.8',
+        'schema_version': '1.9',
         'image_shape': [h, w],
         'dots_shape': [dy, dx],
         'cells_shape': [dy//4, dx//2],
@@ -90,6 +94,8 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
             'gamma': float(getattr(cfg, 'braille_gamma', 1.0)),
             'contrast': float(getattr(cfg, 'braille_contrast', 1.0)),
         },
+        'braille_quality': braille_quality,
+        'braille_density_control': density_control,
         'runtime_sec': time.time() - start,
         'seed': cfg.seed,
         'mode': cfg.mode,
