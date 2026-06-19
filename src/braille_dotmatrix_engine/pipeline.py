@@ -21,11 +21,17 @@ def create_demo_image(path='test_input.png', size=512):
     draw = ImageDraw.Draw(image)
     draw.ellipse((size//3, size//3, 2*size//3, 2*size//3), fill=(255,255,255))
     draw.text((size//12, size//2), 'BRAILLE', fill=(0,0,0))
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     image.save(path)
     return str(path)
 
+def _prepare_outputs(*paths):
+    for path in paths:
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+
 def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.png', output_txt='output_braille.txt', report_json='render_report.json'):
     start = time.time()
+    _prepare_outputs(output_png, output_txt, report_json)
     img = cv2.imread(str(image_path))
     if img is None:
         raise FileNotFoundError(f'Image not found: {image_path}')
