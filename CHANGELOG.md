@@ -1,11 +1,27 @@
 # Changelog
 
+## v1.8.0
+
+### Added
+
+- Added `ASCII_MONO` and `ASCII_COLOR` rendering modes.
+- Added `ascii_backend.py` for luminance-to-character mapping and ANSI color ASCII output.
+- Added `braille_enhance.py` for edge-aware Braille sampling enhancement before dithering.
+- Added ASCII configuration fields and CLI options.
+- Added tests for ASCII rendering and Braille enhancement.
+
+### Changed
+
+- Updated render report schema to `1.8`.
+- Updated package version to `1.8.0`.
+- Extended the project positioning from Braille-only rendering to multi-symbol visual encoding.
+
 ## v1.7.1
 
 ### Added
 
 - Added the `CHROMATIC` screen rendering backend for colored Gaussian dot-matrix output.
-- Added chromatic configuration fields and wired them into the renderer instead of leaving unused public knobs.
+- Added chromatic configuration fields and wired them into the renderer.
 - Added `benchmark.py` with smoke benchmarks for tactile and chromatic rendering.
 - Added `--benchmark` and `--benchmark-csv` CLI options.
 - Added tests for chromatic rendering, benchmark CSV output, and CLI smoke paths.
@@ -40,10 +56,3 @@
 - Added matrix decode path for encode/decode validation.
 - Added regression tests for the official 8-dot Unicode bit layout.
 - Aligned README and package version.
-
-### Added
-
-- Expanded README with CLI usage, Python API usage, output types, validation layer, and project direction.
-- Added `ROADMAP.md` for V1.4 through V3.0 planning.
-- Added `docs/CODE_AUDIT.md` with fixed findings and remaining risks.
-- Expanded project design documentation.
