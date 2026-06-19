@@ -44,11 +44,37 @@ class BrailleArtConfig:
     tile_size_px: int = 512
     tile_overlap_px: int = 64
     seed: int = 42
-    mode: Literal["TACTILE", "SCREEN"] = "TACTILE"
+    mode: Literal["TACTILE", "SCREEN", "CHROMATIC", "ASCII_MONO", "ASCII_COLOR"] = "TACTILE"
     invert_luminance: bool = True
     render_spacing_px: int = 10
     max_local_occupancy: float = 0.72
     strict_tactile_validation: bool = False
+
+    # Braille enhancement layer, applied after sampling and before dithering.
+    braille_preserve_edges: bool = True
+    braille_edge_weight: float = 0.22
+    braille_gamma: float = 1.0
+    braille_contrast: float = 1.12
+
+    # ASCII backend configuration.
+    ascii_charset: str = " .:-=+*#%@"
+    ascii_aspect_ratio: float = 0.50
+    ascii_edge_weight: float = 0.25
+    ascii_invert: bool = False
+    ascii_ansi: bool = False
+
+    # Screen-only chromatic rendering backend.
+    chromatic_cell_w_px: int = 10
+    chromatic_cell_h_px: int = 16
+    chromatic_sigma_ratio: float = 0.62
+    chromatic_saturation_boost: float = 1.6
+    chromatic_neutral_sat: float = 0.12
+    chromatic_contrast: float = 1.35
+    chromatic_sharpen: float = 1.10
+    chromatic_s_curve: float = 0.25
+    chromatic_bloom: float = 0.18
+    chromatic_luma_threshold: int = 108
+    chromatic_white_balance: bool = True
 
     @property
     def dot_diameter_mm(self) -> float:
