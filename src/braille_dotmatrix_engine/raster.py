@@ -37,11 +37,10 @@ def render_screen_png(binary, cfg, path):
     sigma = max(float(getattr(cfg, 'screen_glow_sigma', 2.2)), 0.1)
     glow = gaussian_filter(mask, sigma=sigma)
     glow = np.clip(glow / max(float(glow.max()), 1e-6), 0, 1)
-    base = np.ones((*mask.shape, 3), dtype=np.float32)
     ink = 1.0 - 0.92 * mask[..., None]
     warm = np.stack([1.0 - 0.18 * glow, 1.0 - 0.28 * glow, 1.0 - 0.45 * glow], axis=-1)
-    out = np.clip(base * ink * warm, 0, 1)
-    Image.fromarray((out * 255).astype(np.uint8), mode='RGB').save(Path(path))
+    out = np.clip(ink * warm, 0, 1)
+    Image.fromarray((out * 255).astype(np.uint8)).save(Path(path))
 
 def render_braille_png(binary, cfg, path):
     if cfg.mode == 'SCREEN':
