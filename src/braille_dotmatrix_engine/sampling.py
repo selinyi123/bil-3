@@ -1,0 +1,55 @@
+from __future__ import annotations
+import numpy as np
+from scipy.ndimage import gaussian_filter, map_coordinates
+from .preprocess import float01
+
+def build_dot_grid(cfg, shape):
+    h, w = shape[:2]
+    dx = max(2, 2 * int(cfg.output_width_cells))
+    dy = max(4, int(round((h / max(w, 1)) * dx / 4)) * 4)
+    spacing = w / dx
+    xs = (np.arange(dx) + 0.5) * spacing
+    ys = (np.arange(dy) + 0.5) * spacing
+    xx, yy = np.meshgrid(xs, ys)
+    return np.stack([xx, yy], axis=-1).astype(np.float32), dx, dy, float(spacing)
+
+def gaussian_dot_sampling_flat(img, coords_xy, spacing_px, cfg):
+    gray = float01(img)
+    coords = np.asarray(coords_xy, dtype=np.float32).reshape(-1, 2)
+    sigma = max(((cfg.dot_radius_mm / cfg.dot_spacing_mm) * spacing_px) / 2.0, 0.01)
+    blur = gaussian_filter(gray, sigma=sigma, mode='reflect')
+    rows = np.clip(coords[:, 1], 0, gray.shape[0] - 1)
+    cols = np.clip(coords[:, 0], 0, gray.shape[1] - 1)
+    return np.clip(map_coordinates(blur, [rows, cols], order=1, mode='reflect').astype(np.float32), 0, 1)
+
+def gaussian_dot_sampling_grid(img, coords, spacing_px, cfg):
+    return gaussian_dot_sampling_flat(img, coords.reshape(-1, 2), spacing_px, cfg).reshape(coords.shape[:2])
+
+def process_tiles(img, coords, cfg):
+    gray = float01(img)
+    h, w = gray.shape
+    dy, dx = coords.shape[:2]
+    spacing = w / dx
+    tile = max(16, cfg.tile_size_px)
+    overlap = max(0, min(cfg.tile_overlap_px, tile - 1))
+    step = tile - overlap
+    values = np.zeros((dy, dx), dtype=np.float64)
+    weights = np.zeros((dy, dx), dtype=np.float64)
+    border = max(2, int(np.ceil((cfg.dot_radius_mm / cfg.dot_spacing_mm) * spacing * 4)))
+    for y0 in range(0, h, step):
+        for x0 in range(0, w, step):
+            y1, x1 = min(y0 + tile, h), min(x0 + tile, w)
+            m = (coords[...,1] >= y0) & (coords[...,1] < y1) & (coords[...,0] >= x0) & (coords[...,0] < x1)
+            ys, xs = np.where(m)
+            if len(ys) == 0:
+                continue
+            y0e, y1e = max(0, y0-border), min(h, y1+border)
+            x0e, x1e = max(0, x0-border), min(w, x1+border)
+            samples = gaussian_dot_sampling_flat(gray[y0e:y1e, x0e:x1e], coords[ys, xs] - np.array([x0e, y0e]), spacing, cfg)
+            values[ys, xs] += samples
+            weights[ys, xs] += 1
+    missing = weights <= 0
+    if np.any(missing):
+        values[missing] = gaussian_dot_sampling_grid(gray, coords, spacing, cfg)[missing]
+        weights[missing] = 1
+    return np.clip(values / weights, 0, 1).astype(np.float32)
