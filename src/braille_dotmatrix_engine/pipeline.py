@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 from .config import BrailleArtConfig
 from .dither import correct_over_dense_regions, select_best_dither
+from .metrics import compute_quality_metrics
 from .preprocess import apply_clahe_lab
 from .raster import physical_compliance_check, raster_roundtrip_check, render_braille_png
 from .sampling import build_dot_grid, process_tiles
@@ -37,16 +38,19 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
         values = 1.0 - values
     method, binary = select_best_dither(values, cfg.dither_candidates)
     binary = correct_over_dense_regions(binary, cfg)
+    quality = compute_quality_metrics(values, binary, cfg)
     text = braille_matrix_to_text(encode_to_braille_matrix(binary))
     Path(output_txt).write_text(text, encoding='utf-8')
     render_braille_png(binary, cfg, output_png)
     raster_check = raster_roundtrip_check(binary, output_png, cfg) if cfg.mode == 'TACTILE' else {'ok': None, 'skipped': 'screen mode uses antialias/glow'}
     report = {
+        'schema_version': '1.2',
         'image_shape': [h, w],
         'dots_shape': [dy, dx],
         'cells_shape': [dy//4, dx//2],
         'dither_method': method,
         'occupancy_ratio': float(binary.mean()),
+        'quality_metrics': quality,
         'runtime_sec': time.time() - start,
         'seed': cfg.seed,
         'mode': cfg.mode,
