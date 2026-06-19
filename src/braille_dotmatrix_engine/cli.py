@@ -17,14 +17,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--output-png", default="output_braille.png")
     p.add_argument("--output-txt", default="output_braille.txt")
     p.add_argument("--report-json", default="render_report.json")
+    p.add_argument("--output-svg", default=None)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--no-invert", action="store_true")
     a = p.parse_args(argv)
-    for target in [a.output_png, a.output_txt, a.report_json]:
-        Path(target).parent.mkdir(parents=True, exist_ok=True)
+    for target in [a.output_png, a.output_txt, a.report_json, a.output_svg]:
+        if target is not None:
+            Path(target).parent.mkdir(parents=True, exist_ok=True)
     image = a.image or create_demo_image("test_input.png")
     cfg = BrailleArtConfig(output_width_cells=a.width_cells, mode=a.mode, seed=a.seed, invert_luminance=not a.no_invert)
-    report = process_image(image, cfg, a.output_png, a.output_txt, a.report_json)
+    report = process_image(image, cfg, a.output_png, a.output_txt, a.report_json, a.output_svg)
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
 
