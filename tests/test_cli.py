@@ -18,6 +18,14 @@ def test_cli_chromatic_mode_generates_outputs(tmp_path: Path, monkeypatch):
     assert (tmp_path / 'chromatic.json').exists()
 
 
+def test_cli_ascii_mode_generates_outputs(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert main(['--width-cells', '12', '--mode', 'ASCII_MONO', '--output-png', 'ascii.png', '--output-txt', 'ascii.txt', '--report-json', 'ascii.json']) == 0
+    assert (tmp_path / 'ascii.png').exists()
+    assert (tmp_path / 'ascii.txt').exists()
+    assert (tmp_path / 'ascii.json').exists()
+
+
 def test_cli_benchmark_generates_csv(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     assert main(['--benchmark', '--benchmark-csv', 'bench.csv']) == 0
