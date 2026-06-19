@@ -11,6 +11,8 @@ from .metrics import compute_quality_metrics
 from .preprocess import apply_clahe_lab
 from .raster import physical_compliance_check, raster_roundtrip_check, render_braille_png
 from .sampling import build_dot_grid, process_tiles
+from .tactile import geometry_report
+from .vector import export_svg
 from .braille_unicode import braille_matrix_to_text, encode_to_braille_matrix, unicode_roundtrip_test
 
 def create_demo_image(path='test_input.png', size=512):
@@ -27,11 +29,12 @@ def create_demo_image(path='test_input.png', size=512):
 
 def _prepare_outputs(*paths):
     for path in paths:
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        if path is not None:
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
 
-def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.png', output_txt='output_braille.txt', report_json='render_report.json'):
+def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.png', output_txt='output_braille.txt', report_json='render_report.json', output_svg=None):
     start = time.time()
-    _prepare_outputs(output_png, output_txt, report_json)
+    _prepare_outputs(output_png, output_txt, report_json, output_svg)
     img = cv2.imread(str(image_path))
     if img is None:
         raise FileNotFoundError(f'Image not found: {image_path}')
@@ -48,15 +51,18 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
     text = braille_matrix_to_text(encode_to_braille_matrix(binary))
     Path(output_txt).write_text(text, encoding='utf-8')
     render_braille_png(binary, cfg, output_png)
+    svg_report = export_svg(binary, cfg, output_svg) if output_svg is not None else None
     raster_check = raster_roundtrip_check(binary, output_png, cfg) if cfg.mode == 'TACTILE' else {'ok': None, 'skipped': 'screen mode uses antialias/glow'}
     report = {
-        'schema_version': '1.2',
+        'schema_version': '1.3',
         'image_shape': [h, w],
         'dots_shape': [dy, dx],
         'cells_shape': [dy//4, dx//2],
         'dither_method': method,
         'occupancy_ratio': float(binary.mean()),
         'quality_metrics': quality,
+        'tactile_geometry': geometry_report(cfg),
+        'tactile_export': svg_report,
         'runtime_sec': time.time() - start,
         'seed': cfg.seed,
         'mode': cfg.mode,
