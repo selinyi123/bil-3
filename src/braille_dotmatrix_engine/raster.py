@@ -1,27 +1,61 @@
 from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
+from scipy.ndimage import gaussian_filter
 
 def compensated_dot_radius_mm(cfg):
     radius = cfg.dot_radius_mm / max(1 - cfg.material.shrinkage_rate, 1e-6)
     radius += cfg.printer.xy_error_mm * 0.5
     return min(radius, (cfg.dot_spacing_mm - cfg.safety_gap_mm) / 2)
 
-def render_braille_png(binary, cfg, path):
+def _dot_radius_px(cfg):
+    return max(1, int(round((compensated_dot_radius_mm(cfg) / cfg.dot_spacing_mm) * int(cfg.render_spacing_px))))
+
+def render_tactile_png(binary, cfg, path):
     b = np.asarray(binary, dtype=bool)
     spacing = int(cfg.render_spacing_px)
     image = Image.new('L', (b.shape[1] * spacing, b.shape[0] * spacing), 255)
     draw = ImageDraw.Draw(image)
-    radius = max(1, int(round((compensated_dot_radius_mm(cfg) / cfg.dot_spacing_mm) * spacing)))
+    radius = _dot_radius_px(cfg)
     for y, x in np.argwhere(b):
         cx = int((x + 0.5) * spacing)
         cy = int((y + 0.5) * spacing)
         draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=0)
     image.save(Path(path))
 
+def render_screen_png(binary, cfg, path):
+    b = np.asarray(binary, dtype=bool)
+    spacing = int(cfg.render_spacing_px)
+    image = Image.new('L', (b.shape[1] * spacing, b.shape[0] * spacing), 0)
+    draw = ImageDraw.Draw(image)
+    radius = _dot_radius_px(cfg)
+    for y, x in np.argwhere(b):
+        cx = int((x + 0.5) * spacing)
+        cy = int((y + 0.5) * spacing)
+        draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=255)
+    mask = np.asarray(image, dtype=np.float32) / 255.0
+    sigma = max(float(getattr(cfg, 'screen_glow_sigma', 2.2)), 0.1)
+    glow = gaussian_filter(mask, sigma=sigma)
+    glow = np.clip(glow / max(float(glow.max()), 1e-6), 0, 1)
+    base = np.ones((*mask.shape, 3), dtype=np.float32)
+    ink = 1.0 - 0.92 * mask[..., None]
+    warm = np.stack([1.0 - 0.18 * glow, 1.0 - 0.28 * glow, 1.0 - 0.45 * glow], axis=-1)
+    out = np.clip(base * ink * warm, 0, 1)
+    Image.fromarray((out * 255).astype(np.uint8), mode='RGB').save(Path(path))
+
+def render_braille_png(binary, cfg, path):
+    if cfg.mode == 'SCREEN':
+        render_screen_png(binary, cfg, path)
+    else:
+        render_tactile_png(binary, cfg, path)
+
 def physical_compliance_check(binary, cfg):
     gap = cfg.dot_spacing_mm - cfg.dot_diameter_mm
     issues = [] if gap >= cfg.safety_gap_mm else [f'Edge gap {gap:.3f} mm < safety gap {cfg.safety_gap_mm:.3f} mm']
+    if cfg.dot_diameter_mm <= 0:
+        issues.append('Dot diameter must be positive')
+    if cfg.dot_spacing_mm <= 0:
+        issues.append('Dot spacing must be positive')
     return {'compliant': not issues, 'issues': issues, 'edge_gap_mm': gap}
 
 def raster_roundtrip_check(binary, png_path, cfg):
