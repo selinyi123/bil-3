@@ -1,22 +1,24 @@
 # Roadmap V2
 
-This roadmap moves the project from a Braille-only renderer into a multi-symbol visual encoding engine and then into a semantic tactile graphics engine.
+This roadmap moves the project from a Braille-only renderer into a quality-controlled multi-symbol visual encoding engine and then into a semantic tactile graphics engine.
 
-## v1.8.0 — ASCII and Braille enhancement
+## v1.9.0 — ASCII and Braille quality controls
 
-- Add `ASCII_MONO` and `ASCII_COLOR` rendering modes.
-- Add edge-aware Braille sampling enhancement before dithering.
-- Add CLI smoke paths for ASCII output.
-- Keep JSON reports explicit about `ascii_render` and `braille_enhancement`.
+- Add ASCII charset presets.
+- Add optional HTML ASCII export.
+- Add ASCII tone and edge quality metrics.
+- Add Braille target-density control.
+- Add Braille tile seam diagnostics.
+- Keep JSON reports explicit about `ascii_render`, `braille_quality`, and `braille_density_control`.
 
-## v1.9.0 — Benchmark CI hardening
+## v1.10.0 — Benchmark CI hardening
 
 - Upload benchmark CSV as a GitHub Actions artifact.
 - Add a small benchmark smoke job that runs only on synthetic images.
 - Track runtime, RSS peak, occupancy, and basic quality metrics.
 - Establish baseline thresholds to detect severe regressions.
 
-## v1.10.0 — Rasterizer performance
+## v1.11.0 — Rasterizer performance
 
 - Replace PIL ellipse loops with an OpenCV or NumPy kernel rasterizer.
 - Add a fast path for dense dot grids.
