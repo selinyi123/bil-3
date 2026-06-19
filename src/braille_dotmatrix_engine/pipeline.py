@@ -40,6 +40,22 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
     text = braille_matrix_to_text(encode_to_braille_matrix(binary))
     Path(output_txt).write_text(text, encoding='utf-8')
     render_braille_png(binary, cfg, output_png)
-    report = {'image_shape': [h, w], 'dots_shape': [dy, dx], 'cells_shape': [dy//4, dx//2], 'dither_method': method, 'occupancy_ratio': float(binary.mean()), 'runtime_sec': time.time() - start, 'seed': cfg.seed, 'mode': cfg.mode, 'validation': {'unicode_roundtrip': unicode_roundtrip_test(), 'physical_compliance': physical_compliance_check(binary, cfg), 'raster_roundtrip': raster_roundtrip_check(binary, output_png, cfg)}, 'config': asdict(cfg)}
+    raster_check = raster_roundtrip_check(binary, output_png, cfg) if cfg.mode == 'TACTILE' else {'ok': None, 'skipped': 'screen mode uses antialias/glow'}
+    report = {
+        'image_shape': [h, w],
+        'dots_shape': [dy, dx],
+        'cells_shape': [dy//4, dx//2],
+        'dither_method': method,
+        'occupancy_ratio': float(binary.mean()),
+        'runtime_sec': time.time() - start,
+        'seed': cfg.seed,
+        'mode': cfg.mode,
+        'validation': {
+            'unicode_roundtrip': unicode_roundtrip_test(),
+            'physical_compliance': physical_compliance_check(binary, cfg),
+            'raster_roundtrip': raster_check,
+        },
+        'config': asdict(cfg),
+    }
     Path(report_json).write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding='utf-8')
     return report
