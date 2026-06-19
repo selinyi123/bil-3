@@ -1,5 +1,6 @@
 from .config import BrailleArtConfig, MaterialProfile, PrinterProfile, TactileGeometry
 from .pipeline import create_demo_image, process_image
+from .chromatic import build_chromatic_array, render_chromatic_png
 from .braille_unicode import (
     BRAILLE_BASE,
     BRAILLE_BIT_LAYOUT,
@@ -20,6 +21,8 @@ __all__ = [
     'TactileGeometry',
     'create_demo_image',
     'process_image',
+    'build_chromatic_array',
+    'render_chromatic_png',
     'encode_braille_cell',
     'decode_braille_cell',
     'encode_to_braille_matrix',
