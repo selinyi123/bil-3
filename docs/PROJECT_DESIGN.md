@@ -28,6 +28,8 @@ source image -> dot field -> Unicode Braille cells -> rendered preview -> revers
 3. Unicode roundtrip must remain deterministic.
 4. Tactile validation and screen preview should be separate modes.
 5. Every version should improve either correctness, validation, export, performance, or UX.
+6. CLI behavior must be tested as a first-class public interface.
+7. Failure paths must be tested, not only happy paths.
 
 ## Near-term design target
 
