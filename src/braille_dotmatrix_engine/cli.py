@@ -28,8 +28,13 @@ def main(argv: list[str] | None = None) -> int:
         if target is not None:
             Path(target).parent.mkdir(parents=True, exist_ok=True)
     image = a.image or create_demo_image("test_input.png")
-    cfg = BrailleArtConfig(output_width_cells=a.width_cells, mode=a.mode, seed=a.seed, invert_luminance=not a.no_invert)
-    cfg.strict_tactile_validation = bool(a.strict_tactile)
+    cfg = BrailleArtConfig(
+        output_width_cells=a.width_cells,
+        mode=a.mode,
+        seed=a.seed,
+        invert_luminance=not a.no_invert,
+        strict_tactile_validation=bool(a.strict_tactile),
+    )
     report = process_image(image, cfg, a.output_png, a.output_txt, a.report_json, a.output_svg)
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
