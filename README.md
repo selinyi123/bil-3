@@ -1,12 +1,12 @@
 # Braille Dot-Matrix Engine
 
-Industrial Unicode Braille dot-matrix renderer for screen art, tactile graphics, and structured Braille-cell export.
+Industrial Unicode Braille dot-matrix renderer for tactile graphics, monochrome screen previews, colored dot-matrix art, and benchmarkable rendering experiments.
 
-The project converts images into a physical 2x4 dot lattice, maps each 4x2 dot block to the Unicode Braille Patterns range `U+2800..U+28FF`, and exports both visual artifacts and reusable Braille text.
+The project converts images into a physical 2x4 dot lattice, maps each 4x2 dot block to the Unicode Braille Patterns range `U+2800..U+28FF`, and exports visual artifacts, copyable Braille text, vector/tactile output, validation reports, and benchmark CSVs.
 
 ## Current version
 
-`v1.5.0`
+`v1.7.1`
 
 ## Status
 
@@ -15,11 +15,11 @@ This repository is currently in the **V1 engineering prototype** stage:
 - Unicode Braille encoding and decoding
 - image-to-dot sampling
 - CLAHE preprocessing
-- adaptive dithering candidates
-- tactile and screen rendering modes
-- PNG, TXT, JSON report, and optional SVG export
-- deterministic seed path for density correction
+- serpentine error-diffusion dithering
+- tactile, screen, and `CHROMATIC` rendering modes
+- PNG, TXT, JSON report, optional SVG export, and benchmark CSV output
 - tactile output validation for spacing, active-dot collisions, and occupancy
+- deterministic seed path for density correction
 - CI test scaffold
 
 The next major direction is **Semantic Braille Engine**: image regions should be weighted by semantic importance before tactile/Braille export.
@@ -38,7 +38,7 @@ Generate a demo image and render it:
 braille-dotmatrix --width-cells 80
 ```
 
-Render an input image:
+Render an input image in tactile mode:
 
 ```bash
 braille-dotmatrix input.png \
@@ -50,16 +50,27 @@ braille-dotmatrix input.png \
   --output-svg artifacts/output_braille.svg
 ```
 
+Render a colored screen preview:
+
+```bash
+braille-dotmatrix input.png \
+  --width-cells 100 \
+  --mode CHROMATIC \
+  --output-png artifacts/chromatic.png \
+  --output-txt artifacts/chromatic.txt \
+  --report-json artifacts/chromatic_report.json
+```
+
 Strict tactile validation mode:
 
 ```bash
 braille-dotmatrix input.png --mode TACTILE --strict-tactile
 ```
 
-Screen preview mode:
+Run smoke benchmarks:
 
 ```bash
-braille-dotmatrix input.png --mode SCREEN --output-png artifacts/screen_preview.png
+braille-dotmatrix --benchmark --benchmark-csv artifacts/benchmark.csv
 ```
 
 ## Python API
@@ -69,17 +80,16 @@ from braille_dotmatrix_engine import BrailleArtConfig, process_image
 
 cfg = BrailleArtConfig(
     output_width_cells=100,
-    mode="TACTILE",
+    mode="CHROMATIC",
     seed=42,
 )
 
 report = process_image(
     "input.png",
     cfg,
-    output_png="artifacts/output_braille.png",
-    output_txt="artifacts/output_braille.txt",
+    output_png="artifacts/output.png",
+    output_txt="artifacts/output.txt",
     report_json="artifacts/render_report.json",
-    output_svg="artifacts/output_braille.svg",
 )
 ```
 
@@ -109,10 +119,11 @@ This means every 4x2 physical dot block can be encoded into one Unicode Braille 
 
 | Output | Purpose |
 |---|---|
-| `.png` | screen preview or tactile black/white raster |
+| `.png` | tactile black/white raster, monochrome screen preview, or chromatic preview |
 | `.txt` | copyable Unicode Braille text |
 | `.json` | render report, metrics, validation status, config |
 | `.svg` | physical millimeter-space tactile vector export |
+| `.csv` | benchmark runtime / memory / quality table |
 
 ## Validation layer
 
@@ -139,7 +150,7 @@ V3 Tactile Graphics Pipeline
 V4 Visual Semantic Encoding Layer
 ```
 
-See [`ROADMAP.md`](ROADMAP.md) and [`docs/PROJECT_DESIGN.md`](docs/PROJECT_DESIGN.md).
+See [`ROADMAP.md`](ROADMAP.md), [`docs/ROADMAP_V2.md`](docs/ROADMAP_V2.md), and [`docs/PROJECT_DESIGN.md`](docs/PROJECT_DESIGN.md).
 
 ## Tests
 
