@@ -44,15 +44,26 @@ class BrailleArtConfig:
     tile_size_px: int = 512
     tile_overlap_px: int = 64
     seed: int = 42
-    mode: Literal["TACTILE", "SCREEN", "CHROMATIC"] = "TACTILE"
+    mode: Literal["TACTILE", "SCREEN", "CHROMATIC", "ASCII_MONO", "ASCII_COLOR"] = "TACTILE"
     invert_luminance: bool = True
     render_spacing_px: int = 10
     max_local_occupancy: float = 0.72
     strict_tactile_validation: bool = False
 
-    # Screen-only chromatic rendering backend. These fields are intentionally
-    # used in src/braille_dotmatrix_engine/chromatic.py so public knobs are not
-    # dead API surface.
+    # Braille enhancement layer, applied after sampling and before dithering.
+    braille_preserve_edges: bool = True
+    braille_edge_weight: float = 0.22
+    braille_gamma: float = 1.0
+    braille_contrast: float = 1.12
+
+    # ASCII backend configuration.
+    ascii_charset: str = " .:-=+*#%@"
+    ascii_aspect_ratio: float = 0.50
+    ascii_edge_weight: float = 0.25
+    ascii_invert: bool = False
+    ascii_ansi: bool = False
+
+    # Screen-only chromatic rendering backend.
     chromatic_cell_w_px: int = 10
     chromatic_cell_h_px: int = 16
     chromatic_sigma_ratio: float = 0.62
