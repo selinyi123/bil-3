@@ -11,7 +11,7 @@ def test_chromatic_array_shape_and_dtype():
     binary[0::2, 0::2] = True
     source = np.zeros((32, 32, 3), dtype=np.uint8)
     source[:, :, 1] = 255
-    cfg = BrailleArtConfig(mode='CHROMATIC', chromatic_cell_w_px=8, chromatic_cell_h_px=12, chromatic_luma_threshold=80)
+    cfg = BrailleArtConfig(mode='CHROMATIC', chromatic_cell_w_px=8, chromatic_cell_h_px=12, chromatic_luma_threshold=10, chromatic_white_balance=False)
     arr = build_chromatic_array(binary, source, cfg)
     assert arr.dtype == np.uint8
     assert arr.shape == (24, 32, 3)
