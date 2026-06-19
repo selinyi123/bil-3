@@ -12,6 +12,13 @@ def _positive_int(value: str) -> int:
     return parsed
 
 
+def _unit_float(value: str) -> float:
+    parsed = float(value)
+    if parsed < 0 or parsed > 1:
+        raise argparse.ArgumentTypeError('value must be between 0 and 1')
+    return parsed
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Unicode Braille and ASCII visual-symbol renderer")
     p.add_argument("image", nargs="?")
@@ -21,12 +28,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--output-txt", default="output_braille.txt")
     p.add_argument("--report-json", default="render_report.json")
     p.add_argument("--output-svg", default=None)
+    p.add_argument("--output-html", default=None)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--no-invert", action="store_true")
     p.add_argument("--strict-tactile", action="store_true", help="fail tactile-mode export when tactile validation reports errors")
     p.add_argument("--ascii-charset", default=None)
+    p.add_argument("--ascii-preset", choices=["custom", "standard", "dense", "blocks", "binary"], default=None)
     p.add_argument("--ascii-aspect", type=float, default=None)
     p.add_argument("--ascii-edge-weight", type=float, default=None)
+    p.add_argument("--ascii-html", action="store_true")
+    p.add_argument("--braille-target-density", type=_unit_float, default=None)
     p.add_argument("--benchmark", action="store_true", help="run the benchmark suite instead of rendering one image")
     p.add_argument("--benchmark-csv", default="benchmark.csv")
     a = p.parse_args(argv)
@@ -35,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
         write_benchmark_csv(rows, a.benchmark_csv)
         print(json.dumps({'benchmark_csv': a.benchmark_csv, 'rows': rows}, indent=2, ensure_ascii=False))
         return 0
-    for target in [a.output_png, a.output_txt, a.report_json, a.output_svg]:
+    for target in [a.output_png, a.output_txt, a.report_json, a.output_svg, a.output_html]:
         if target is not None:
             Path(target).parent.mkdir(parents=True, exist_ok=True)
     image = a.image or create_demo_image("test_input.png")
@@ -48,11 +59,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     if a.ascii_charset is not None:
         cfg.ascii_charset = a.ascii_charset
+        cfg.ascii_charset_preset = 'custom'
+    if a.ascii_preset is not None:
+        cfg.ascii_charset_preset = a.ascii_preset
     if a.ascii_aspect is not None:
         cfg.ascii_aspect_ratio = a.ascii_aspect
     if a.ascii_edge_weight is not None:
         cfg.ascii_edge_weight = a.ascii_edge_weight
-    report = process_image(image, cfg, a.output_png, a.output_txt, a.report_json, a.output_svg)
+    if a.ascii_html:
+        cfg.ascii_html = True
+    if a.braille_target_density is not None:
+        cfg.braille_target_density = a.braille_target_density
+    report = process_image(image, cfg, a.output_png, a.output_txt, a.report_json, a.output_svg, a.output_html)
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
 
