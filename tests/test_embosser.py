@@ -34,7 +34,7 @@ def test_generic_embosser_capacity_report():
 def test_embosser_manifest_for_six_dot_text_export():
     profile = GenericEmbosserProfile(name='six-dot')
     manifest = embosser_export_manifest(profile, output_path='out.brf', source_artifact='out.txt')
-    assert PACKAGE_VERSION == '1.14.0'
+    assert PACKAGE_VERSION == '1.15.0'
     assert manifest['ok'] is True
     assert manifest['encoding_family'] == 'BRF_OR_BRAILLE_ASCII'
     assert manifest['portable_text_export'] is True
@@ -62,3 +62,7 @@ def test_invalid_embosser_profile_reports_errors():
 def test_graphics_mode_without_support_is_invalid():
     profile = GenericEmbosserProfile(cell_mode='GRAPHICS', supports_graphics_mode=False)
     assert 'GRAPHICS cell mode requires supports_graphics_mode=True' in validate_embosser_profile(profile)
+
+
+def test_embosser_encoding_family_for_eight_dot():
+    assert embosser_encoding_family(GenericEmbosserProfile(cell_mode='EIGHT_DOT')) == 'UNICODE_BRAILLE_OR_DEVICE_SPECIFIC_8_DOT'

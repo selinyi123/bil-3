@@ -102,7 +102,7 @@ Acceptance:
 
 ## v1.14.0 — Embosser and tactile device export boundary
 
-Status: implemented in `feat/v1.14.0-embosser-export`.
+Status: merged to `main`.
 
 Goals:
 
@@ -121,18 +121,36 @@ Acceptance:
 
 ## v1.15.0 — BRF text export prototype
 
+Status: implemented in `feat/v1.15.0-brf-text-export`.
+
 Goals:
 
 - add a conservative six-dot BRF/Braille ASCII export path,
 - keep eight-dot and graphics mode separate from the portable text exporter,
 - add pagination by embosser profile capacity,
-- report incompatible cells and fallback behavior.
+- report incompatible cells and fallback behavior,
+- provide ASCII-safe artifact writing.
 
 Acceptance:
 
 - compatible Unicode Braille text can become a paginated plain text export,
 - incompatible cells are reported rather than silently changed,
-- tests cover pagination and diagnostics.
+- tests cover mapping, pagination, unsupported-cell diagnostics, and file writing.
+
+## v1.16.0 — BRF artifact integration
+
+Goals:
+
+- expose BRF export through CLI or pipeline-adjacent artifact helpers,
+- add report artifact manifest entries for BRF outputs,
+- support explicit page-width/page-height parameters through embosser profiles,
+- keep non-portable graphics-mode export separate.
+
+Acceptance:
+
+- CLI can write a BRF-like artifact from compatible Braille text,
+- reports can reference BRF artifacts without changing renderer semantics,
+- diagnostics remain explicit for unsupported 8-dot cells.
 
 ## v2.0.0 — Semantic Braille Engine
 
