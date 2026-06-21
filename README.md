@@ -6,7 +6,7 @@ The project converts images into a physical 2x4 dot lattice and multiple text/vi
 
 ## Current version
 
-`v1.18.0`
+`v1.19.0`
 
 ## Status
 
@@ -25,6 +25,7 @@ This repository is currently in the **V1 engineering prototype** stage:
 - named embosser profile presets for common BRF page capacities
 - conservative six-dot BRF-like text export with compatibility diagnostics
 - BRF diagnostics summary with warning/error counts and reason grouping
+- compact BRF report summary and validation-only CLI mode
 - CLI-level BRF artifact integration and report JSON update path
 - benchmark profiles for smoke, medium, and stress image sizes
 - benchmark memory estimates and artifact-size reporting
@@ -38,13 +39,14 @@ This repository is currently in the **V1 engineering prototype** stage:
 - deterministic seed path for density correction
 - CI test scaffold
 
-### v1.18.0 BRF diagnostics hardening notes
+### v1.19.0 BRF report ergonomics notes
 
-- Added BRF diagnostic severity for warning/error classification.
-- Added reason grouping through `diagnostics.by_reason` and `diagnostics.by_severity`.
-- Added top-level `warning_count` and `error_count` to BRF export reports.
-- Added strict BRF mode for Python API and CLI.
-- Kept render schema stable at `1.11` because BRF diagnostics live inside the existing `brf_export` report section.
+- Added compact `summary` to BRF export reports.
+- Added `validate_brf_text()` for JSON-only validation workflows.
+- Added CLI flag `--brf-validate-only` to attach BRF diagnostics without writing a `.brf` file.
+- Added CLI flag `--brf-print-summary` to print a one-line BRF summary after JSON output.
+- Restored artifact manifest detail coverage for kind, MIME, and existence diagnostics.
+- Kept render schema stable at `1.11` because all additions live inside the existing `brf_export` and artifact manifest contract.
 
 The next major direction is **Semantic Braille Engine**: image regions should be weighted by semantic importance before tactile/Braille export.
 
@@ -88,7 +90,17 @@ braille-dotmatrix input.png \
   --report-json artifacts/render_report.json
 ```
 
-Enable strict BRF diagnostics:
+Validate BRF diagnostics without writing a BRF file:
+
+```bash
+braille-dotmatrix input.png \
+  --mode TACTILE \
+  --brf-validate-only \
+  --brf-print-summary \
+  --report-json artifacts/render_report.json
+```
+
+Strict BRF diagnostics:
 
 ```bash
 braille-dotmatrix input.png \
@@ -107,12 +119,14 @@ braille-dotmatrix --benchmark --benchmark-csv artifacts/benchmark.csv
 
 ```python
 from braille_dotmatrix_engine import build_embosser_profile, unicode_braille_to_brf_text, write_brf_text
+from braille_dotmatrix_engine.brf import validate_brf_text
 
 profile = build_embosser_profile("a4-40x25")
 result = unicode_braille_to_brf_text("⠁⠃⠉", profile)
 print(result.text)
-print(result.report["diagnostics"])
+print(result.report["summary"])
 write_brf_text("⠁⠃⠉", "artifacts/output.brf", profile)
+print(validate_brf_text("⠁⠃⠉", profile)["summary"])
 ```
 
 Strict BRF export:
@@ -169,7 +183,7 @@ Package version, render schema version, and benchmark schema version are intenti
 - `schema_version`: JSON render-report schema version.
 - `benchmark_schema_version`: benchmark artifact schema version.
 
-`v1.18.0` keeps render schema at `1.11` because strict BRF diagnostics are added inside the existing `brf_export` section and do not change the top-level render report contract.
+`v1.19.0` keeps render schema at `1.11` because validation-only BRF summaries are added inside the existing `brf_export` report section and do not change the top-level render report contract.
 
 ## Validation, quality, and benchmark layer
 
@@ -187,6 +201,7 @@ Current validation and quality reporting includes:
 - generic embosser capacity, profile presets, and export-boundary validation
 - six-dot BRF-like export diagnostics for unsupported cells and non-Braille characters
 - BRF diagnostic severity summary by reason and severity
+- compact BRF report summary for CLI and JSON workflows
 - benchmark CSV artifact with runtime, RSS, occupancy, tone, edge, memory-estimate, artifact-size, profile, and schema fields
 - deterministic density correction using `np.random.default_rng(seed)`
 

@@ -3,7 +3,7 @@ import argparse, json
 from pathlib import Path
 from .engine import BrailleArtConfig, create_demo_image, process_image
 from .benchmark import run_benchmark_suite, write_benchmark_csv
-from .brf import BrfExportError, attach_brf_artifact_to_report, write_brf_text
+from .brf import BrfExportError, attach_brf_artifact_to_report, validate_brf_text, write_brf_text
 from .embosser import build_embosser_profile, embosser_profile_names
 
 BRF_COMPATIBLE_MODES = {"TACTILE", "SCREEN", "CHROMATIC"}
@@ -27,10 +27,10 @@ def _write_report_json(report: dict, report_json: str) -> None:
     Path(report_json).write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding='utf-8')
 
 
-def _validate_brf_mode(parser: argparse.ArgumentParser, mode: str, output_brf: str | None) -> None:
-    if output_brf is not None and mode not in BRF_COMPATIBLE_MODES:
+def _validate_brf_mode(parser: argparse.ArgumentParser, mode: str, output_brf: str | None, validate_only: bool) -> None:
+    if (output_brf is not None or validate_only) and mode not in BRF_COMPATIBLE_MODES:
         allowed = ', '.join(sorted(BRF_COMPATIBLE_MODES))
-        parser.error(f'--output-brf requires a Braille-backed mode: {allowed}')
+        parser.error(f'BRF output requires a Braille-backed mode: {allowed}')
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -48,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--brf-cols", type=_positive_int, default=None, help="optional BRF cells per line override")
     p.add_argument("--brf-rows", type=_positive_int, default=None, help="optional BRF lines per page override")
     p.add_argument("--strict-brf", action="store_true", help="validate BRF diagnostics")
+    p.add_argument("--brf-validate-only", action="store_true", help="add BRF diagnostics to the report without writing a BRF file")
+    p.add_argument("--brf-print-summary", action="store_true", help="print a compact BRF summary line after JSON output")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--no-invert", action="store_true")
     p.add_argument("--strict-tactile", action="store_true", help="fail tactile-mode export when tactile validation reports errors")
@@ -65,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
         write_benchmark_csv(rows, a.benchmark_csv)
         print(json.dumps({'benchmark_csv': a.benchmark_csv, 'rows': rows}, indent=2, ensure_ascii=False))
         return 0
-    _validate_brf_mode(p, a.mode, a.output_brf)
+    _validate_brf_mode(p, a.mode, a.output_brf, bool(a.brf_validate_only))
     for target in [a.output_png, a.output_txt, a.report_json, a.output_svg, a.output_html, a.output_brf]:
         if target is not None:
             Path(target).parent.mkdir(parents=True, exist_ok=True)
@@ -91,21 +93,29 @@ def main(argv: list[str] | None = None) -> int:
     if a.braille_target_density is not None:
         cfg.braille_target_density = a.braille_target_density
     report = process_image(image, cfg, a.output_png, a.output_txt, a.report_json, a.output_svg, a.output_html)
-    if a.output_brf is not None:
+    if a.output_brf is not None or a.brf_validate_only:
         profile = build_embosser_profile(a.brf_profile, max_cols=a.brf_cols, max_rows=a.brf_rows)
         source_text = Path(a.output_txt).read_text(encoding='utf-8')
-        try:
-            brf_report = write_brf_text(source_text, a.output_brf, profile, strict=bool(a.strict_brf))
-        except BrfExportError as exc:
-            brf_report = dict(exc.report)
-            brf_report['path'] = str(a.output_brf)
-            brf_report['bytes'] = 0
-            report = attach_brf_artifact_to_report(report, output_brf=a.output_brf, output_png=a.output_png, output_txt=a.output_txt, report_json=a.report_json, output_svg=a.output_svg, output_html=a.output_html, brf_report=brf_report)
-            _write_report_json(report, a.report_json)
-            print(json.dumps(report, indent=2, ensure_ascii=False))
-            return 2
-        report = attach_brf_artifact_to_report(report, output_brf=a.output_brf, output_png=a.output_png, output_txt=a.output_txt, report_json=a.report_json, output_svg=a.output_svg, output_html=a.output_html, brf_report=brf_report)
+        exit_code = 0
+        if a.brf_validate_only:
+            brf_report = validate_brf_text(source_text, profile, strict=bool(a.strict_brf))
+            if a.strict_brf and brf_report['diagnostics']['total'] > 0:
+                exit_code = 2
+        else:
+            try:
+                brf_report = write_brf_text(source_text, a.output_brf, profile, strict=bool(a.strict_brf))
+            except BrfExportError as exc:
+                brf_report = dict(exc.report)
+                brf_report['path'] = str(a.output_brf)
+                brf_report['bytes'] = 0
+                brf_report['validate_only'] = False
+                exit_code = 2
+        report = attach_brf_artifact_to_report(report, output_brf=None if a.brf_validate_only else a.output_brf, output_png=a.output_png, output_txt=a.output_txt, report_json=a.report_json, output_svg=a.output_svg, output_html=a.output_html, brf_report=brf_report)
         _write_report_json(report, a.report_json)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        if a.brf_print_summary:
+            print(brf_report['summary'])
+        return exit_code
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0
 
