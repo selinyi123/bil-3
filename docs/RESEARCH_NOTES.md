@@ -108,6 +108,18 @@ New sources reviewed for this pass:
 
 Assessment for this repository: do not hard-code any single embosser workflow yet. Add a generic embosser profile and export manifest first, then build real BRF or device-specific exporters in later releases.
 
+### 10. v1.15.0 research pass: six-dot text export and pagination
+
+New sources reviewed for this pass:
+
+- Braille ASCII references: the 64 printable characters from ASCII 32 through 95 represent all possible six-dot Braille cells.
+- BRF references: BRF files are plain Braille ASCII plus spaces and line/page control characters, making them a practical offline export artifact.
+- Unicode Braille references: Unicode Braille supports 8-dot patterns, so six-dot export must explicitly reject dots 7 and 8 instead of dropping them.
+- BrlAPI references: direct device APIs are useful later, but v1.15.0 should remain offline text export rather than live device control.
+- GitHub, Stack Overflow, Lobsters, Reddit, X/Twitter, Zhihu, hackathon, and TCS Stack Exchange searches did not surface a stronger direct component than implementing a conservative local mapping and diagnostics layer.
+
+Assessment for this repository: implement six-dot BRF-like export as a pure text artifact, not as a translator or device driver. Use the embosser profile from v1.14.0 only for wrapping and pagination.
+
 ## Non-duplication rule for future research
 
 Do not repeat generic `image to braille converter` discovery unless checking for major new repositories. New research should focus on one slice per pass:
@@ -121,4 +133,5 @@ Do not repeat generic `image to braille converter` discovery unless checking for
 7. benchmark datasets for tactile graphics,
 8. artifact manifests and interactive tactile metadata,
 9. benchmark profiles, memory models, and artifact-size accounting,
-10. embosser page profiles, BRF export, and device-specific graphics modes.
+10. embosser page profiles, BRF export, and device-specific graphics modes,
+11. BRF pagination, six-dot compatibility diagnostics, and optional translator integration.
