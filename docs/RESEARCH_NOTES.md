@@ -1,0 +1,61 @@
+# Research Notes
+
+Purpose: keep external research close to the repository so future planning avoids repeating basic discovery.
+
+## Scope
+
+Core target remains: visual input to Unicode Braille, tactile dot-matrix exports, ASCII/HTML previews, SVG/PNG artifacts, validation reports, and future semantic tactile graphics.
+
+## Findings
+
+### 1. Simple image-to-Braille converters
+
+Representative repositories found through GitHub search:
+
+- `Kuuhhl/pictureToBraille`
+- `JDaxmaut/photo_to_braille`
+- `an0ndev/brailleart`
+- `DanielDJones/imgToBraille`
+
+Assessment: these are adjacent but mostly narrower. Basic image-to-Unicode-Braille conversion is already common. This project should not compete only as a simple converter; its differentiation should be physical geometry, reportability, multi-output artifacts, and semantic tactile policy.
+
+### 2. ASCII image converters
+
+Representative repositories found through GitHub search:
+
+- `TheZoraiz/ascii-image-converter`
+- `itsPeetah/image-2-text-converter`
+- `our0boros/ascii-art-converter`
+
+Assessment: ASCII output is not novel by itself. Keep ASCII as a preview and visual-symbol backend, not as the core identity. Useful ideas to borrow: fast-path rendering, font/terminal aspect calibration, ANSI color handling, and HTML preview ergonomics.
+
+### 3. BrailleRAP and tactile fabrication tools
+
+Representative repositories found through GitHub search:
+
+- `braillerap/DesktopBrailleRAP`
+- related forks under other owners
+
+Assessment: this direction is useful for physical output compatibility. Future work should explore embossing, CNC, laser, and print workflows, but avoid overfitting to one device until the geometry and SVG export contracts are stable.
+
+### 4. Chart accessibility and semantic tactile graphics
+
+Relevant research directions:
+
+- Chart4Blind: bitmap chart conversion to accessible SVG, CSV, and alt-text outputs.
+- Tactile Vega-Lite: tactile chart generation with tactile-specific abstractions and smart defaults.
+- Color-image-to-tactile-graphics algorithms: edge extraction plus texture and region encoding.
+
+Assessment: this is the strongest V2/V3 direction. The next meaningful leap is semantic region mapping, object-edge-text separation, and region-specific tactile policies.
+
+## Non-duplication rule for future research
+
+Do not repeat generic `image to braille converter` discovery unless checking for major new repositories. New research should focus on one slice per pass:
+
+1. semantic tactile chart engines,
+2. embossing-machine output formats,
+3. tactile geometry readability standards,
+4. dot-density and collision validation,
+5. segmentation-assisted tactile policy,
+6. fast raster/vector backends,
+7. benchmark datasets for tactile graphics.

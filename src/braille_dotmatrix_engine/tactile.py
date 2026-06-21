@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from dataclasses import asdict
 import numpy as np
+
+from .geometry import dot_radius_report
 
 
 def geometry_report(cfg) -> dict:
@@ -20,6 +23,7 @@ def geometry_report(cfg) -> dict:
         'geometry': asdict(cfg.geometry),
         'material': asdict(cfg.material),
         'printer': asdict(cfg.printer),
+        'radius': dot_radius_report(cfg),
         'edge_gap_mm': gap,
         'cell_width_mm': cell_width,
         'cell_height_mm': cell_height,

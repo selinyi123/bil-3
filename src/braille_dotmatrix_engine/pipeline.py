@@ -14,7 +14,7 @@ from .metrics import compute_quality_metrics
 from .preprocess import apply_clahe_lab
 from .raster import physical_compliance_check, raster_roundtrip_check, render_braille_png
 from .sampling import build_dot_grid, process_tiles
-from .schema import RENDER_SCHEMA_VERSION
+from .schema import PACKAGE_VERSION, RENDER_SCHEMA_VERSION
 from .tactile import geometry_report, validate_tactile_output
 from .validation import validate_config
 from .vector import export_svg
@@ -87,6 +87,7 @@ def process_image(image_path, cfg: BrailleArtConfig, output_png='output_braille.
     svg_report = export_svg(binary, cfg, output_svg) if output_svg is not None else None
     raster_check = raster_roundtrip_check(binary, output_png, cfg) if cfg.mode == 'TACTILE' else {'ok': None, 'skipped': 'non-tactile mode uses antialias/glow/color/text'}
     report = {
+        'package_version': PACKAGE_VERSION,
         'schema_version': RENDER_SCHEMA_VERSION,
         'image_shape': [h, w],
         'dots_shape': [dy, dx],
