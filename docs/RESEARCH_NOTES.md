@@ -132,6 +132,18 @@ New sources reviewed for this pass:
 
 Assessment for this repository: integrate BRF at the artifact boundary. Do not add a new renderer mode. Let CLI generate a BRF-like artifact after rendering, then update `artifact_manifest`, legacy `artifacts`, and `brf_export` in the report JSON.
 
+### 12. v1.17.0 research pass: embosser profile presets
+
+New sources reviewed for this pass:
+
+- Braille page-layout references: common embosser ranges cluster around roughly 34 to 40 cells per line and about 25 lines per page.
+- Braille ASCII and BRF references: BRF remains a six-dot, line-oriented offline artifact format, so preset defaults should target predictable line/page capacities.
+- Braille embosser references: devices differ by paper size, interpoint behavior, 6-dot/8-dot support, and graphics capability; presets should be metadata defaults rather than vendor drivers.
+- GitHub searches for embosser profiles and BRF exporters did not reveal a stronger reusable profile registry component than adding a small in-project preset registry.
+- Hacker News, Medium, LinkedIn, Reddit, X/Twitter, Zhihu, Stack Overflow, Lobsters, hackathon, and TCS Stack Exchange searches did not surface a project-specific alternative with better fit than the current preset + override architecture.
+
+Assessment for this repository: add named capacity presets for common page layouts, keep manual overrides, and preserve the driver boundary. `--brf-profile` should select a preset, while `--brf-cols` and `--brf-rows` should remain explicit overrides.
+
 ## Non-duplication rule for future research
 
 Do not repeat generic `image to braille converter` discovery unless checking for major new repositories. New research should focus on one slice per pass:
@@ -147,4 +159,5 @@ Do not repeat generic `image to braille converter` discovery unless checking for
 9. benchmark profiles, memory models, and artifact-size accounting,
 10. embosser page profiles, BRF export, and device-specific graphics modes,
 11. BRF pagination, six-dot compatibility diagnostics, and optional translator integration,
-12. BRF artifact/report contracts and CLI ergonomics.
+12. BRF artifact/report contracts and CLI ergonomics,
+13. embosser profile presets, page-size capacity defaults, and profile override ergonomics.
