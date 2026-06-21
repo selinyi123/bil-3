@@ -4,7 +4,7 @@ from pathlib import Path
 from .engine import BrailleArtConfig, create_demo_image, process_image
 from .benchmark import run_benchmark_suite, write_benchmark_csv
 from .brf import attach_brf_artifact_to_report, write_brf_text
-from .embosser import GenericEmbosserProfile
+from .embosser import build_embosser_profile, embosser_profile_names
 
 
 def _positive_int(value: str) -> int:
@@ -36,6 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--output-svg", default=None)
     p.add_argument("--output-html", default=None)
     p.add_argument("--output-brf", default=None, help="optional six-dot Braille ASCII / BRF-like text artifact path")
+    p.add_argument("--brf-profile", choices=embosser_profile_names(), default="a4-40x25", help="named BRF embosser profile preset")
     p.add_argument("--brf-cols", type=_positive_int, default=None, help="optional BRF cells per line override")
     p.add_argument("--brf-rows", type=_positive_int, default=None, help="optional BRF lines per page override")
     p.add_argument("--seed", type=int, default=42)
@@ -81,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         cfg.braille_target_density = a.braille_target_density
     report = process_image(image, cfg, a.output_png, a.output_txt, a.report_json, a.output_svg, a.output_html)
     if a.output_brf is not None:
-        profile = GenericEmbosserProfile(max_cols=a.brf_cols, max_rows=a.brf_rows)
+        profile = build_embosser_profile(a.brf_profile, max_cols=a.brf_cols, max_rows=a.brf_rows)
         source_text = Path(a.output_txt).read_text(encoding='utf-8')
         brf_report = write_brf_text(source_text, a.output_brf, profile)
         report = attach_brf_artifact_to_report(
