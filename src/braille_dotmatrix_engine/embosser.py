@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Literal
 
 EmbosserCellMode = Literal['SIX_DOT', 'EIGHT_DOT', 'GRAPHICS']
@@ -32,6 +32,87 @@ class GenericEmbosserProfile:
     @property
     def printable_height_mm(self) -> float:
         return max(0.0, self.page_height_mm - self.margin_top_mm - self.margin_bottom_mm)
+
+
+EMBOSSER_PROFILE_PRESETS: dict[str, GenericEmbosserProfile] = {
+    'a4-40x25': GenericEmbosserProfile(
+        name='a4-40x25',
+        page_width_mm=210.0,
+        page_height_mm=297.0,
+        margin_left_mm=10.0,
+        margin_right_mm=10.0,
+        margin_top_mm=12.0,
+        margin_bottom_mm=12.0,
+        cell_width_mm=4.7,
+        cell_height_mm=10.0,
+        max_cols=40,
+        max_rows=25,
+    ),
+    'letter-40x25': GenericEmbosserProfile(
+        name='letter-40x25',
+        page_width_mm=215.9,
+        page_height_mm=279.4,
+        margin_left_mm=10.0,
+        margin_right_mm=10.0,
+        margin_top_mm=12.0,
+        margin_bottom_mm=12.0,
+        cell_width_mm=4.8,
+        cell_height_mm=10.0,
+        max_cols=40,
+        max_rows=25,
+    ),
+    'portable-34x25': GenericEmbosserProfile(
+        name='portable-34x25',
+        page_width_mm=210.0,
+        page_height_mm=297.0,
+        margin_left_mm=18.0,
+        margin_right_mm=18.0,
+        margin_top_mm=12.0,
+        margin_bottom_mm=12.0,
+        cell_width_mm=5.0,
+        cell_height_mm=10.0,
+        max_cols=34,
+        max_rows=25,
+    ),
+    'a4-interpoint-40x25': GenericEmbosserProfile(
+        name='a4-interpoint-40x25',
+        page_width_mm=210.0,
+        page_height_mm=297.0,
+        margin_left_mm=10.0,
+        margin_right_mm=10.0,
+        margin_top_mm=12.0,
+        margin_bottom_mm=12.0,
+        cell_width_mm=4.7,
+        cell_height_mm=10.0,
+        supports_interpoint=True,
+        max_cols=40,
+        max_rows=25,
+    ),
+}
+
+
+def embosser_profile_names() -> list[str]:
+    return sorted(EMBOSSER_PROFILE_PRESETS)
+
+
+def get_embosser_profile_preset(name: str) -> GenericEmbosserProfile:
+    try:
+        return EMBOSSER_PROFILE_PRESETS[name]
+    except KeyError as exc:
+        known = ', '.join(embosser_profile_names())
+        raise ValueError(f'unknown embosser profile preset: {name}; known presets: {known}') from exc
+
+
+def build_embosser_profile(name: str = 'a4-40x25', *, max_cols: int | None = None, max_rows: int | None = None) -> GenericEmbosserProfile:
+    profile = get_embosser_profile_preset(name)
+    if max_cols is not None or max_rows is not None:
+        profile = replace(
+            profile,
+            name=f'{profile.name}+override',
+            max_cols=max_cols if max_cols is not None else profile.max_cols,
+            max_rows=max_rows if max_rows is not None else profile.max_rows,
+        )
+    return profile
 
 
 def _safe_int_capacity(available_mm: float, unit_mm: float) -> int:
