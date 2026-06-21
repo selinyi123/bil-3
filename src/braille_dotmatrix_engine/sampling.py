@@ -1,11 +1,22 @@
 from __future__ import annotations
+import numbers
+
 import numpy as np
 from scipy.ndimage import gaussian_filter, map_coordinates
 from .preprocess import float01
 
 
+def _require_int_positive(name: str, value) -> int:
+    if isinstance(value, bool) or not isinstance(value, numbers.Integral):
+        raise ValueError(f'{name} must be an integer')
+    parsed = int(value)
+    if parsed <= 0:
+        raise ValueError(f'{name} must be positive')
+    return parsed
+
+
 def _enforce_dot_grid_limit(cfg, dx: int, dy: int) -> None:
-    max_total_dots = int(getattr(cfg, 'max_total_dots', 2_000_000))
+    max_total_dots = _require_int_positive('max_total_dots', getattr(cfg, 'max_total_dots', 2_000_000))
     total = int(dx) * int(dy)
     if total > max_total_dots:
         raise ValueError(f'dot grid too large: {total} dots exceeds max_total_dots={max_total_dots}')
@@ -13,7 +24,8 @@ def _enforce_dot_grid_limit(cfg, dx: int, dy: int) -> None:
 
 def build_dot_grid(cfg, shape):
     h, w = shape[:2]
-    dx = max(2, 2 * int(cfg.output_width_cells))
+    output_width_cells = _require_int_positive('output_width_cells', cfg.output_width_cells)
+    dx = max(2, 2 * output_width_cells)
     dy = max(4, int(round((h / max(w, 1)) * dx / 4)) * 4)
     _enforce_dot_grid_limit(cfg, dx, dy)
     spacing = w / dx
