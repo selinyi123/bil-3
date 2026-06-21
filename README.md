@@ -6,7 +6,7 @@ The project converts images into a physical 2x4 dot lattice and multiple text/vi
 
 ## Current version
 
-`v1.10.1`
+`v1.10.2`
 
 ## Status
 
@@ -21,13 +21,21 @@ This repository is currently in the **V1 engineering prototype** stage:
 - tactile, screen, `CHROMATIC`, `ASCII_MONO`, and `ASCII_COLOR` rendering modes
 - ASCII charset presets, ASCII PNG previews, and optional HTML export
 - PNG, TXT, JSON report, optional SVG/HTML export, and benchmark CSV output
-- dedicated CI benchmark smoke job with uploaded benchmark artifacts
+- dedicated benchmark smoke job with uploaded benchmark artifacts
 - centralized render/benchmark schema constants
 - centralized configuration validation before rendering
 - Windows-safe benchmark RSS fallback
 - tactile output validation for spacing, active-dot collisions, and occupancy
 - deterministic seed path for density correction
 - CI test scaffold
+
+### v1.10.2 hardening notes
+
+- Expanded public configuration validation for render modes, dither methods, geometry, material, printer, Braille enhancement, ASCII, and chromatic parameters.
+- Added a shared manufacturing-compensated dot-radius helper so PNG and SVG exports use the same physical radius policy.
+- Added package-version reporting while keeping render and benchmark schema versions independent.
+- Added tests for invalid configuration rejection and SVG geometry compensation.
+- Added research and version-planning docs to reduce duplicate work before the V2 semantic tactile engine.
 
 The next major direction is **Semantic Braille Engine**: image regions should be weighted by semantic importance before tactile/Braille export.
 
@@ -174,6 +182,16 @@ This means every 4x2 physical dot block can be encoded into one Unicode Braille 
 | `.svg` | physical millimeter-space tactile vector export |
 | `.csv` | benchmark runtime / memory / quality table |
 
+## Version and schema policy
+
+Package version, render schema version, and benchmark schema version are intentionally independent:
+
+- `package_version`: release/build version of the Python package.
+- `schema_version`: JSON render-report schema version.
+- `benchmark_schema_version`: benchmark artifact schema version.
+
+A patch release may keep the report schema stable while changing implementation details.
+
 ## Validation, quality, and benchmark layer
 
 Current validation and quality reporting includes:
@@ -198,12 +216,12 @@ V1 Braille + ASCII Multi-Symbol Renderer
 ↓
 V2 Semantic Braille Engine
 ↓
-V3 Tactile Graphics Pipeline
+V3 Tactile Graphics Quality Engine
 ↓
 V4 Visual Semantic Encoding Layer
 ```
 
-See [`ROADMAP.md`](ROADMAP.md), [`docs/ROADMAP_V2.md`](docs/ROADMAP_V2.md), and [`docs/PROJECT_DESIGN.md`](docs/PROJECT_DESIGN.md).
+See [`ROADMAP.md`](ROADMAP.md), [`docs/ROADMAP_V2.md`](docs/ROADMAP_V2.md), [`docs/PROJECT_DESIGN.md`](docs/PROJECT_DESIGN.md), [`docs/RESEARCH_NOTES.md`](docs/RESEARCH_NOTES.md), and [`docs/VERSION_PLAN.md`](docs/VERSION_PLAN.md).
 
 ## Tests
 
