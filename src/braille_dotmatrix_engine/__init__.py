@@ -5,11 +5,15 @@ from .ascii_backend import ASCII_PRESETS, render_ascii_html, render_ascii_png, r
 from .artifacts import artifact_manifest, legacy_artifact_paths, prepare_artifact_dirs
 from .brf import BRAILLE_ASCII_BY_CHAR, BRAILLE_ASCII_BY_MASK, BrfExportResult, attach_brf_artifact_to_report, unicode_braille_to_brf_text, write_brf_text
 from .embosser import (
+    EMBOSSER_PROFILE_PRESETS,
     GenericEmbosserProfile,
     assert_embosser_profile,
+    build_embosser_profile,
     embosser_capacity,
     embosser_encoding_family,
     embosser_export_manifest,
+    embosser_profile_names,
+    get_embosser_profile_preset,
     validate_embosser_profile,
 )
 from .braille_enhance import enhance_sampled_values
@@ -56,10 +60,14 @@ __all__ = [
     'attach_brf_artifact_to_report',
     'unicode_braille_to_brf_text',
     'write_brf_text',
+    'EMBOSSER_PROFILE_PRESETS',
     'GenericEmbosserProfile',
+    'build_embosser_profile',
     'embosser_capacity',
     'embosser_encoding_family',
     'embosser_export_manifest',
+    'embosser_profile_names',
+    'get_embosser_profile_preset',
     'validate_embosser_profile',
     'assert_embosser_profile',
     'enhance_sampled_values',
