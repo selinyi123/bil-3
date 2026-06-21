@@ -6,7 +6,7 @@ The project converts images into a physical 2x4 dot lattice and multiple text/vi
 
 ## Current version
 
-`v1.16.0`
+`v1.17.0`
 
 ## Status
 
@@ -22,6 +22,7 @@ This repository is currently in the **V1 engineering prototype** stage:
 - renderer strategy runtime for mode-specific output behavior
 - artifact manifest and report adapter layer
 - generic embosser export boundary for page/device capacity metadata
+- named embosser profile presets for common BRF page capacities
 - conservative six-dot BRF-like text export with compatibility diagnostics
 - CLI-level BRF artifact integration and report JSON update path
 - benchmark profiles for smoke, medium, and stress image sizes
@@ -36,13 +37,13 @@ This repository is currently in the **V1 engineering prototype** stage:
 - deterministic seed path for density correction
 - CI test scaffold
 
-### v1.16.0 BRF artifact integration notes
+### v1.17.0 embosser profile preset notes
 
-- Added `brf` to the artifact manifest contract and bumped render schema to `1.11`.
-- Added CLI flags: `--output-brf`, `--brf-cols`, and `--brf-rows`.
-- CLI BRF export runs after normal rendering by reading the generated text artifact.
-- CLI output report JSON is updated with `brf_export`, `artifacts['brf']`, and `artifact_manifest['brf']`.
-- Renderer semantics remain unchanged; BRF stays a pipeline-adjacent artifact rather than a new renderer mode.
+- Added named BRF-oriented embosser profile presets: `a4-40x25`, `letter-40x25`, `portable-34x25`, and `a4-interpoint-40x25`.
+- Added public helpers: `embosser_profile_names()`, `get_embosser_profile_preset()`, and `build_embosser_profile()`.
+- Added CLI flag `--brf-profile`; `--brf-cols` and `--brf-rows` now override the selected preset.
+- Kept render schema stable at `1.11` because the report contract already has `brf_export` and `artifact_manifest['brf']`.
+- Presets are capacity/layout metadata only; vendor-specific device drivers remain out of scope.
 
 The next major direction is **Semantic Braille Engine**: image regions should be weighted by semantic importance before tactile/Braille export.
 
@@ -73,7 +74,7 @@ braille-dotmatrix input.png \
   --output-svg artifacts/output_braille.svg
 ```
 
-Render tactile mode and add a BRF-like artifact:
+Render tactile mode and add a BRF-like artifact with a named profile:
 
 ```bash
 braille-dotmatrix input.png \
@@ -82,9 +83,19 @@ braille-dotmatrix input.png \
   --output-png artifacts/output_braille.png \
   --output-txt artifacts/output_braille.txt \
   --output-brf artifacts/output_braille.brf \
-  --brf-cols 40 \
-  --brf-rows 25 \
+  --brf-profile a4-40x25 \
   --report-json artifacts/render_report.json
+```
+
+Override a preset capacity when needed:
+
+```bash
+braille-dotmatrix input.png \
+  --mode TACTILE \
+  --output-brf artifacts/output_braille.brf \
+  --brf-profile portable-34x25 \
+  --brf-cols 32 \
+  --brf-rows 20
 ```
 
 Render ASCII art:
@@ -197,22 +208,22 @@ print(renderer_names())
 print(type(get_renderer("TACTILE")).__name__)
 ```
 
-Inspect generic embosser capacity:
+Inspect generic embosser capacity and presets:
 
 ```python
-from braille_dotmatrix_engine import GenericEmbosserProfile, embosser_capacity, embosser_export_manifest
+from braille_dotmatrix_engine import build_embosser_profile, embosser_capacity, embosser_profile_names
 
-profile = GenericEmbosserProfile(name="a4-six-dot")
+print(embosser_profile_names())
+profile = build_embosser_profile("a4-40x25")
 print(embosser_capacity(profile))
-print(embosser_export_manifest(profile, output_path="out.brf", source_artifact="output.txt"))
 ```
 
 Export six-dot Braille text as a BRF-like artifact:
 
 ```python
-from braille_dotmatrix_engine import GenericEmbosserProfile, unicode_braille_to_brf_text, write_brf_text
+from braille_dotmatrix_engine import build_embosser_profile, unicode_braille_to_brf_text, write_brf_text
 
-profile = GenericEmbosserProfile(max_cols=40, max_rows=25)
+profile = build_embosser_profile("a4-40x25")
 result = unicode_braille_to_brf_text("⠁⠃⠉", profile)
 print(result.text)
 print(result.report)
@@ -262,7 +273,7 @@ Package version, render schema version, and benchmark schema version are intenti
 - `schema_version`: JSON render-report schema version.
 - `benchmark_schema_version`: benchmark artifact schema version.
 
-A patch release may keep the report schema stable while changing implementation details. `v1.12.0` bumps the render schema because `artifact_manifest` is now part of the report contract. `v1.13.0` bumps the benchmark schema because benchmark rows now include profile, memory-estimate, and artifact-size fields. `v1.14.0` keeps existing schemas stable because embosser support is introduced as a standalone export-boundary API. `v1.15.0` also keeps existing schemas stable because BRF-like export is a standalone API and does not alter render reports or benchmark rows. `v1.16.0` bumps the render schema to `1.11` because `brf` is now part of `artifact_manifest` and CLI reports can include `brf_export`.
+A patch release may keep the report schema stable while changing implementation details. `v1.12.0` bumps the render schema because `artifact_manifest` is now part of the report contract. `v1.13.0` bumps the benchmark schema because benchmark rows now include profile, memory-estimate, and artifact-size fields. `v1.14.0` keeps existing schemas stable because embosser support is introduced as a standalone export-boundary API. `v1.15.0` also keeps existing schemas stable because BRF-like export is a standalone API and does not alter render reports or benchmark rows. `v1.16.0` bumps the render schema to `1.11` because `brf` is now part of `artifact_manifest` and CLI reports can include `brf_export`. `v1.17.0` keeps render schema at `1.11` because profile presets only change helper defaults and selected profile names.
 
 ## Validation, quality, and benchmark layer
 
@@ -277,7 +288,7 @@ Current validation and quality reporting includes:
 - Braille tile seam diagnostics
 - ASCII tone score, edge score, charset preset, PNG preview, and HTML availability
 - artifact manifest with path, kind, role, MIME, and existence diagnostics
-- generic embosser capacity and export-boundary validation
+- generic embosser capacity, profile presets, and export-boundary validation
 - six-dot BRF-like export diagnostics for unsupported cells and non-Braille characters
 - benchmark CSV artifact with runtime, RSS, occupancy, tone, edge, memory-estimate, artifact-size, profile, and schema fields
 - deterministic density correction using `np.random.default_rng(seed)`
