@@ -76,8 +76,13 @@ def validate_config(cfg: BrailleArtConfig) -> None:
     if str(cfg.mode) not in VALID_RENDER_MODES:
         raise ValueError(f"Unsupported render mode: {cfg.mode}")
 
-    _require_int_positive("output_width_cells", cfg.output_width_cells)
+    output_width_cells = _require_int_positive("output_width_cells", cfg.output_width_cells)
     _require_int_positive("render_spacing_px", cfg.render_spacing_px)
+    max_output_width_cells = _require_int_positive("max_output_width_cells", cfg.max_output_width_cells)
+    _require_int_positive("max_total_dots", cfg.max_total_dots)
+    if output_width_cells > max_output_width_cells:
+        raise ValueError("output_width_cells must not exceed max_output_width_cells")
+
     _require_positive("clahe_clip_limit", float(cfg.clahe_clip_limit))
     _require_int_positive("clahe_grid_size", cfg.clahe_grid_size)
 
