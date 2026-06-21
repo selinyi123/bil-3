@@ -1,13 +1,17 @@
 from __future__ import annotations
+
 from pathlib import Path
 import html
 import numpy as np
+
+from .geometry import compensated_dot_radius_mm
 from .tactile import geometry_report
+
 
 def export_svg(binary, cfg, path, title='Braille Dot-Matrix Export'):
     b = np.asarray(binary, dtype=bool)
     spacing = float(cfg.dot_spacing_mm)
-    radius = float(cfg.dot_radius_mm)
+    radius = compensated_dot_radius_mm(cfg)
     width = b.shape[1] * spacing
     height = b.shape[0] * spacing
     lines = [
@@ -21,8 +25,15 @@ def export_svg(binary, cfg, path, title='Braille Dot-Matrix Export'):
         cy = (float(y) + 0.5) * spacing
         lines.append(f'<circle cx="{cx:.3f}" cy="{cy:.3f}" r="{radius:.3f}" fill="black"/>')
     report = geometry_report(cfg)
-    lines.append(f'<!-- compliant={report["compliant"]} edge_gap_mm={report["edge_gap_mm"]:.3f} -->')
+    lines.append(f'<!-- compliant={report["compliant"]} edge_gap_mm={report["edge_gap_mm"]:.3f} compensated_dot_radius_mm={radius:.3f} -->')
     lines.append('</svg>')
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     Path(path).write_text('\n'.join(lines), encoding='utf-8')
-    return {'path': str(path), 'width_mm': width, 'height_mm': height, 'dot_count': int(np.count_nonzero(b)), 'geometry': report}
+    return {
+        'path': str(path),
+        'width_mm': width,
+        'height_mm': height,
+        'dot_count': int(np.count_nonzero(b)),
+        'compensated_dot_radius_mm': radius,
+        'geometry': report,
+    }
