@@ -139,7 +139,7 @@ Acceptance:
 
 ## v1.16.0 — BRF artifact integration
 
-Status: implemented in `feat/v1.16.0-brf-artifact-integration`.
+Status: merged to `main`.
 
 Goals:
 
@@ -158,18 +158,37 @@ Acceptance:
 
 ## v1.17.0 — Embosser profile presets
 
+Status: implemented in `feat/v1.17.0-embosser-profile-presets`.
+
 Goals:
 
 - provide named page/profile presets for common layout targets,
-- support A4, Letter, and custom capacities,
-- add single-side/interpoint metadata to presets,
-- keep profile presets independent from vendor drivers.
+- support A4, Letter, portable, and interpoint metadata presets,
+- add `--brf-profile` while preserving explicit rows/columns overrides,
+- keep profile presets independent from vendor drivers,
+- keep render schema stable at `1.11`.
 
 Acceptance:
 
 - callers can request a named profile without manually setting rows and columns,
-- reports preserve the selected profile name,
-- invalid profiles still fail fast.
+- reports preserve the selected or overridden profile name,
+- invalid profiles still fail fast,
+- tests cover preset lookup, preset capacity, override behavior, and CLI selection.
+
+## v1.18.0 — BRF diagnostics hardening
+
+Goals:
+
+- add strict BRF mode for unsupported cells,
+- split warning/error severity for non-Braille, 8-dot, and graphics-mode mismatches,
+- expose a compact diagnostics summary for CLI output,
+- preserve non-strict fallback behavior for exploratory rendering.
+
+Acceptance:
+
+- `--strict-brf` can fail on unsupported BRF content,
+- reports include warning/error counts by reason,
+- non-strict mode remains backward compatible.
 
 ## v2.0.0 — Semantic Braille Engine
 
