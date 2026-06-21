@@ -13,16 +13,17 @@ This roadmap moves the project from a Braille-only renderer into a quality-contr
 
 ## v1.10.0 — Benchmark CI hardening
 
-- Upload benchmark CSV as a GitHub Actions artifact.
+- Upload benchmark CSV and JSON outputs as GitHub Actions artifacts.
 - Add a small benchmark smoke job that runs only on synthetic images.
-- Track runtime, RSS peak, occupancy, and basic quality metrics.
-- Establish baseline thresholds to detect severe regressions.
+- Track runtime, RSS peak, occupancy, tone, edge, render schema, and benchmark schema metrics.
+- Establish conservative baseline thresholds to detect severe regressions.
 
 ## v1.11.0 — Rasterizer performance
 
 - Replace PIL ellipse loops with an OpenCV or NumPy kernel rasterizer.
 - Add a fast path for dense dot grids.
 - Keep output determinism identical across Python versions.
+- Compare fast rasterizer results against the v1.10 benchmark artifact baseline.
 
 ## v2.0.0 — Semantic Braille Engine
 

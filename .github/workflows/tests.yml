@@ -24,3 +24,27 @@ jobs:
         with:
           name: pytest-${{ matrix.python-version }}
           path: pytest-${{ matrix.python-version }}.xml
+
+  benchmark-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -U pip
+      - run: pip install -e ".[dev]"
+      - name: Run benchmark smoke suite
+        run: |
+          python -m braille_dotmatrix_engine.benchmark \
+            --output-dir artifacts/benchmarks \
+            --csv artifacts/benchmarks/benchmark.csv \
+            --summary artifacts/benchmarks/benchmark_summary.json \
+            --max-runtime-sec 120 \
+            --max-rss-mb 4096
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-smoke
+          path: artifacts/benchmarks
+          retention-days: 7

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import argparse
 import csv
-import os
+import json
+import math
 import resource
 import time
 from pathlib import Path
@@ -12,7 +14,18 @@ import numpy as np
 from .config import BrailleArtConfig
 from .pipeline import process_image
 
-__all__ = ["create_synthetic_image", "run_one_benchmark", "run_benchmark_suite", "write_benchmark_csv"]
+BENCHMARK_SCHEMA_VERSION = "1.10"
+
+__all__ = [
+    "BENCHMARK_SCHEMA_VERSION",
+    "create_synthetic_image",
+    "run_one_benchmark",
+    "run_benchmark_suite",
+    "validate_benchmark_rows",
+    "write_benchmark_csv",
+    "write_benchmark_summary",
+    "main",
+]
 
 
 def _rss_mb() -> float:
@@ -22,6 +35,14 @@ def _rss_mb() -> float:
     if usage > 10_000_000:
         return float(usage / (1024 * 1024))
     return float(usage / 1024)
+
+
+def _finite_float(value, default: float = 0.0) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if math.isfinite(parsed) else default
 
 
 def create_synthetic_image(path, width: int = 256, height: int = 192) -> str:
@@ -40,57 +61,123 @@ def create_synthetic_image(path, width: int = 256, height: int = 192) -> str:
     return str(path)
 
 
-def run_one_benchmark(name: str, image_shape: tuple[int, int], mode: str, output_dir='artifacts/benchmarks') -> dict:
+def run_one_benchmark(name: str, image_shape: tuple[int, int], mode: str, output_dir="artifacts/benchmarks") -> dict:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     height, width = image_shape
-    image = create_synthetic_image(output_dir / f'{name}_{mode.lower()}_input.png', width=width, height=height)
+    image = create_synthetic_image(output_dir / f"{name}_{mode.lower()}_input.png", width=width, height=height)
     cfg = BrailleArtConfig(output_width_cells=max(12, min(96, width // 8)), mode=mode, render_spacing_px=6)
     before = _rss_mb()
     start = time.perf_counter()
     report = process_image(
         image,
         cfg,
-        output_dir / f'{name}_{mode.lower()}.png',
-        output_dir / f'{name}_{mode.lower()}.txt',
-        output_dir / f'{name}_{mode.lower()}.json',
+        output_dir / f"{name}_{mode.lower()}.png",
+        output_dir / f"{name}_{mode.lower()}.txt",
+        output_dir / f"{name}_{mode.lower()}.json",
     )
     elapsed = time.perf_counter() - start
     after = _rss_mb()
-    q = report.get('quality_metrics', {})
+    q = report.get("quality_metrics", {})
+    ascii_quality = (report.get("ascii_render") or {}).get("quality", {})
     return {
-        'name': name,
-        'mode': mode,
-        'width': width,
-        'height': height,
-        'runtime_sec': round(float(elapsed), 6),
-        'rss_delta_mb': round(float(max(0.0, after - before)), 3),
-        'rss_peak_mb': round(float(after), 3),
-        'occupancy_ratio': round(float(report.get('occupancy_ratio', 0.0)), 6),
-        'tone_psnr': round(float(q.get('psnr', q.get('tone_psnr', 0.0)) or 0.0), 6),
-        'edge_score': round(float(q.get('edge_score', 0.0) or 0.0), 6),
-        'schema_version': report.get('schema_version'),
+        "benchmark_schema_version": BENCHMARK_SCHEMA_VERSION,
+        "name": name,
+        "mode": mode,
+        "width": width,
+        "height": height,
+        "runtime_sec": round(_finite_float(elapsed), 6),
+        "rss_delta_mb": round(float(max(0.0, after - before)), 3),
+        "rss_peak_mb": round(_finite_float(after), 3),
+        "occupancy_ratio": round(_finite_float(report.get("occupancy_ratio")), 6),
+        "tone_psnr": round(_finite_float(q.get("psnr", q.get("tone_psnr", 0.0))), 6),
+        "tone_score": round(_finite_float(ascii_quality.get("tone_score", 0.0)), 6),
+        "edge_score": round(_finite_float(q.get("edge_score", ascii_quality.get("edge_score", 0.0))), 6),
+        "schema_version": report.get("schema_version"),
     }
 
 
-def run_benchmark_suite(output_dir='artifacts/benchmarks') -> list[dict]:
+def run_benchmark_suite(output_dir="artifacts/benchmarks", include_ascii: bool = True) -> list[dict]:
     cases = [
-        ('smoke_128', (96, 128)),
-        ('smoke_256', (192, 256)),
+        ("smoke_128", (96, 128)),
+        ("smoke_256", (192, 256)),
     ]
+    modes = ["TACTILE", "CHROMATIC"]
+    if include_ascii:
+        modes.extend(["ASCII_MONO", "ASCII_COLOR"])
     rows: list[dict] = []
     for name, shape in cases:
-        rows.append(run_one_benchmark(name, shape, 'TACTILE', output_dir))
-        rows.append(run_one_benchmark(name, shape, 'CHROMATIC', output_dir))
+        for mode in modes:
+            rows.append(run_one_benchmark(name, shape, mode, output_dir))
     return rows
 
 
-def write_benchmark_csv(rows: list[dict], path='benchmark.csv') -> str:
+def validate_benchmark_rows(rows: list[dict], *, max_runtime_sec: float = 60.0, max_rss_peak_mb: float = 2048.0) -> list[str]:
+    issues: list[str] = []
+    if not rows:
+        return ["benchmark suite produced no rows"]
+    for idx, row in enumerate(rows):
+        label = f"row {idx} {row.get('name')} {row.get('mode')}"
+        runtime = _finite_float(row.get("runtime_sec"), -1.0)
+        rss_peak = _finite_float(row.get("rss_peak_mb"), -1.0)
+        occupancy = _finite_float(row.get("occupancy_ratio"), -1.0)
+        if runtime < 0 or runtime > max_runtime_sec:
+            issues.append(f"{label}: runtime_sec {runtime} outside threshold <= {max_runtime_sec}")
+        if rss_peak < 0 or rss_peak > max_rss_peak_mb:
+            issues.append(f"{label}: rss_peak_mb {rss_peak} outside threshold <= {max_rss_peak_mb}")
+        if occupancy < 0 or occupancy > 1:
+            issues.append(f"{label}: occupancy_ratio {occupancy} outside [0, 1]")
+        if row.get("schema_version") != "1.9":
+            issues.append(f"{label}: render schema_version is {row.get('schema_version')}, expected 1.9")
+        if row.get("benchmark_schema_version") != BENCHMARK_SCHEMA_VERSION:
+            issues.append(f"{label}: benchmark_schema_version is {row.get('benchmark_schema_version')}, expected {BENCHMARK_SCHEMA_VERSION}")
+    return issues
+
+
+def write_benchmark_csv(rows: list[dict], path="benchmark.csv") -> str:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = sorted({key for row in rows for key in row})
-    with path.open('w', newline='', encoding='utf-8') as f:
+    with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
     return str(path)
+
+
+def write_benchmark_summary(rows: list[dict], path="benchmark_summary.json", *, issues: list[str] | None = None) -> str:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "benchmark_schema_version": BENCHMARK_SCHEMA_VERSION,
+        "row_count": len(rows),
+        "modes": sorted({str(row.get("mode")) for row in rows}),
+        "max_runtime_sec": max((_finite_float(row.get("runtime_sec")) for row in rows), default=0.0),
+        "max_rss_peak_mb": max((_finite_float(row.get("rss_peak_mb")) for row in rows), default=0.0),
+        "issues": issues or [],
+        "ok": not issues,
+    }
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return str(path)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run Braille Dot-Matrix benchmark smoke suite")
+    parser.add_argument("--output-dir", default="artifacts/benchmarks")
+    parser.add_argument("--csv", default="artifacts/benchmarks/benchmark.csv")
+    parser.add_argument("--summary", default="artifacts/benchmarks/benchmark_summary.json")
+    parser.add_argument("--max-runtime-sec", type=float, default=60.0)
+    parser.add_argument("--max-rss-mb", type=float, default=2048.0)
+    parser.add_argument("--no-ascii", action="store_true")
+    args = parser.parse_args(argv)
+
+    rows = run_benchmark_suite(args.output_dir, include_ascii=not args.no_ascii)
+    issues = validate_benchmark_rows(rows, max_runtime_sec=args.max_runtime_sec, max_rss_peak_mb=args.max_rss_mb)
+    csv_path = write_benchmark_csv(rows, args.csv)
+    summary_path = write_benchmark_summary(rows, args.summary, issues=issues)
+    print(json.dumps({"csv": csv_path, "summary": summary_path, "issues": issues}, indent=2, ensure_ascii=False))
+    return 1 if issues else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
