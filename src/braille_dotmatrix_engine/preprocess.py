@@ -11,7 +11,8 @@ def _as_uint8_image(img) -> np.ndarray:
     if arr.ndim == 3 and arr.shape[2] not in (3, 4):
         raise ValueError("color image must have 3 or 4 channels")
     if np.issubdtype(arr.dtype, np.floating):
-        max_value = float(np.nanmax(arr)) if arr.size else 0.0
+        arr = np.nan_to_num(arr.astype(np.float32), nan=0.0, posinf=255.0, neginf=0.0)
+        max_value = float(arr.max()) if arr.size else 0.0
         if max_value <= 1.0:
             arr = arr * 255.0
     return np.clip(arr, 0, 255).astype(np.uint8)
