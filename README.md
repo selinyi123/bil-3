@@ -1,12 +1,12 @@
 # Braille Dot-Matrix Engine
 
-Industrial Unicode Braille and ASCII visual-symbol rendering engine for tactile graphics, monochrome previews, colored dot-matrix art, terminal text art, HTML previews, and benchmarkable rendering experiments.
+Industrial Unicode Braille and ASCII visual-symbol rendering engine for tactile graphics, monochrome previews, colored dot-matrix art, terminal text art, HTML previews, CI benchmark artifacts, and benchmarkable rendering experiments.
 
-The project converts images into a physical 2x4 dot lattice and multiple text/visual encodings: Unicode Braille, tactile PNG/SVG, chromatic previews, ASCII mono/color text, HTML ASCII previews, validation reports, quality reports, and benchmark CSVs.
+The project converts images into a physical 2x4 dot lattice and multiple text/visual encodings: Unicode Braille, tactile PNG/SVG, chromatic previews, ASCII mono/color text, HTML ASCII previews, validation reports, quality reports, and benchmark CSV/JSON artifacts.
 
 ## Current version
 
-`v1.9.0`
+`v1.10.0`
 
 ## Status
 
@@ -21,6 +21,7 @@ This repository is currently in the **V1 engineering prototype** stage:
 - tactile, screen, `CHROMATIC`, `ASCII_MONO`, and `ASCII_COLOR` rendering modes
 - ASCII charset presets and optional HTML export
 - PNG, TXT, JSON report, optional SVG/HTML export, and benchmark CSV output
+- dedicated CI benchmark smoke job with uploaded benchmark artifacts
 - tactile output validation for spacing, active-dot collisions, and occupancy
 - deterministic seed path for density correction
 - CI test scaffold
@@ -96,10 +97,19 @@ Strict tactile validation mode:
 braille-dotmatrix input.png --mode TACTILE --strict-tactile
 ```
 
-Run smoke benchmarks:
+Run smoke benchmarks through the package CLI:
 
 ```bash
 braille-dotmatrix --benchmark --benchmark-csv artifacts/benchmark.csv
+```
+
+Run the dedicated benchmark module used by CI:
+
+```bash
+python -m braille_dotmatrix_engine.benchmark \
+  --output-dir artifacts/benchmarks \
+  --csv artifacts/benchmarks/benchmark.csv \
+  --summary artifacts/benchmarks/benchmark_summary.json
 ```
 
 ## Python API
@@ -159,7 +169,7 @@ This means every 4x2 physical dot block can be encoded into one Unicode Braille 
 | `.svg` | physical millimeter-space tactile vector export |
 | `.csv` | benchmark runtime / memory / quality table |
 
-## Validation and quality layer
+## Validation, quality, and benchmark layer
 
 Current validation and quality reporting includes:
 
@@ -171,6 +181,7 @@ Current validation and quality reporting includes:
 - Braille density target control
 - Braille tile seam diagnostics
 - ASCII tone score, edge score, charset preset, and HTML availability
+- benchmark CSV artifact with runtime, RSS, occupancy, tone, edge, and schema fields
 - deterministic density correction using `np.random.default_rng(seed)`
 
 ## Design direction
