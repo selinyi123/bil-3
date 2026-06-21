@@ -18,6 +18,7 @@ def test_cli_writes_brf_and_updates_report(tmp_path):
         '--output-png', str(output_png),
         '--output-txt', str(output_txt),
         '--output-brf', str(output_brf),
+        '--brf-profile', 'portable-34x25',
         '--brf-cols', '12',
         '--brf-rows', '5',
         '--report-json', str(report_json),
@@ -27,10 +28,11 @@ def test_cli_writes_brf_and_updates_report(tmp_path):
     assert output_brf.exists()
     assert output_brf.read_text(encoding='ascii')
     report = json.loads(report_json.read_text(encoding='utf-8'))
-    assert report['package_version'] == '1.16.0'
+    assert report['package_version'] == '1.17.0'
     assert report['schema_version'] == '1.11'
     assert report['artifacts']['brf'].endswith('out.brf')
     assert report['artifact_manifest']['brf']['exists'] is True
     assert report['brf_export']['path'].endswith('out.brf')
+    assert report['brf_export']['profile'] == 'portable-34x25+override'
     assert report['brf_export']['cols'] == 12
     assert report['brf_export']['rows'] == 5
