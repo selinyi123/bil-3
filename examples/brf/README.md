@@ -12,6 +12,8 @@ These fixtures exercise the six-dot BRF preflight path.
 
 ## CLI examples
 
+Single-file preflight:
+
 ```bash
 braille-dotmatrix \
   --brf-preflight examples/brf/valid_six_dot.txt \
@@ -19,10 +21,28 @@ braille-dotmatrix \
   --report-json artifacts/valid_six_dot_report.json
 ```
 
+Strict single-file preflight:
+
 ```bash
 braille-dotmatrix \
   --brf-preflight examples/brf/eight_dot_error.txt \
   --strict-brf \
   --brf-print-summary \
   --report-json artifacts/eight_dot_error_report.json
+```
+
+Directory preflight:
+
+```bash
+braille-dotmatrix \
+  --brf-preflight-batch examples/brf \
+  --brf-batch-pattern "*.txt" \
+  --brf-print-summary \
+  --report-json artifacts/brf_batch_report.json
+```
+
+Expected aggregate for this directory:
+
+```text
+files=3; ok=1; warnings=1; errors=1; issue_files=2
 ```
