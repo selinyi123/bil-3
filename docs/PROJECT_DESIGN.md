@@ -11,6 +11,8 @@ The current V1 layer is a Unicode Braille, ASCII, chromatic preview, and BRF bou
 ```text
 Image
 ↓
+Input resource gate
+↓
 Preprocess
 ↓
 Dot sampling
@@ -40,7 +42,7 @@ Braille/tactile rendering
 
 | Module | Responsibility |
 |---|---|
-| `config.py` | Configuration dataclasses for geometry, material, printer, rendering, ASCII, chromatic, and resource-limit parameters. |
+| `config.py` | Configuration dataclasses for geometry, material, printer, rendering, ASCII, chromatic, input resource limits, and output resource-limit parameters. |
 | `validation.py` | Central validation gate for public configuration values. |
 | `runtime_validation.py` | Shared strict direct-API runtime validation helpers for finite numbers, integral dimensions, and binary matrices. |
 | `preprocess.py` | Image input normalization, grayscale conversion, and CLAHE preprocessing. |
@@ -64,7 +66,7 @@ Braille/tactile rendering
 | `embosser.py` | Generic embosser profile, capacity, and export boundary metadata. |
 | `benchmark.py` | Benchmark profiles, runtime/memory/artifact metrics, and summary artifacts. |
 | `json_utils.py` | Strict JSON serialization for reports and CLI output. |
-| `cli.py` | Command-line interface for rendering, benchmarks, and BRF preflight modes. |
+| `cli.py` | Command-line interface for rendering, benchmark CSV/summary artifacts, and BRF preflight modes. |
 
 ## Engineering principles
 
@@ -76,6 +78,7 @@ Braille/tactile rendering
 6. Make all reports strict-JSON safe for dashboards and contract tests.
 7. Guard direct public-ish APIs, not only the end-to-end pipeline.
 8. Route repeated runtime validation through shared helpers instead of module-local copies.
+9. Enforce input resource limits before expensive render work.
 
 ## Known limitations
 

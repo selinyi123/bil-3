@@ -50,8 +50,11 @@ class BrailleArtConfig:
     max_local_occupancy: float = 0.72
     strict_tactile_validation: bool = False
 
-    # Resource safety limits. These prevent accidental unbounded dot-grid and
-    # raster/vector artifact generation from pathological API inputs.
+    # Resource safety limits. These prevent accidental unbounded image loading,
+    # dot-grid generation, and raster/vector artifact generation from
+    # pathological API inputs.
+    max_input_pixels: int = 50_000_000
+    max_input_file_bytes: int = 50_000_000
     max_output_width_cells: int = 320
     max_total_dots: int = 2_000_000
 

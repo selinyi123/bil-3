@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .benchmark import run_benchmark_suite, write_benchmark_csv
+from .benchmark import run_benchmark_suite, validate_benchmark_rows, write_benchmark_csv, write_benchmark_summary
 from .brf import BrfExportError, attach_brf_artifact_to_report, validate_brf_text, write_brf_text
 from .brf_batch import DEFAULT_BRF_DIAGNOSTICS_LIMIT, DEFAULT_MAX_BRF_BATCH_FILES, DEFAULT_MAX_BRF_FILE_BYTES, resolve_brf_input_paths, validate_brf_files
 from .embosser import build_embosser_profile, embosser_profile_names
@@ -71,6 +71,24 @@ def _read_limited_text(path: Path, max_file_bytes: int) -> str:
     return path.read_text(encoding='utf-8')
 
 
+def _benchmark_summary_default(csv_path: str) -> str:
+    return str(Path(csv_path).with_name(Path(csv_path).stem + '_summary.json'))
+
+
+def _run_benchmark(args) -> int:
+    summary_path = args.benchmark_summary or _benchmark_summary_default(args.benchmark_csv)
+    rows = run_benchmark_suite(
+        output_dir=Path(args.benchmark_csv).parent or Path('.'),
+        include_ascii=not bool(args.benchmark_no_ascii),
+        profile=args.benchmark_profile,
+    )
+    issues = validate_benchmark_rows(rows, max_runtime_sec=args.benchmark_max_runtime_sec, max_rss_peak_mb=args.benchmark_max_rss_mb)
+    csv_path = write_benchmark_csv(rows, args.benchmark_csv)
+    summary_path = write_benchmark_summary(rows, summary_path, issues=issues)
+    _print_json({'benchmark_csv': csv_path, 'benchmark_summary': summary_path, 'issues': issues, 'rows': rows})
+    return 1 if issues else 0
+
+
 def _run_brf_preflight(args) -> int:
     source_path = Path(args.brf_preflight)
     profile = build_embosser_profile(args.brf_profile, max_cols=args.brf_cols, max_rows=args.brf_rows)
@@ -126,6 +144,11 @@ def main(argv: list[str] | None = None) -> int:
     mode_group.add_argument("--brf-preflight", default=None, help="validate an existing Unicode Braille text file without rendering an image")
     mode_group.add_argument("--brf-preflight-batch", default=None, help="validate a file or directory of Unicode Braille text files")
     p.add_argument("--benchmark-csv", default="benchmark.csv")
+    p.add_argument("--benchmark-summary", default=None)
+    p.add_argument("--benchmark-profile", choices=["smoke", "medium", "stress"], default="smoke")
+    p.add_argument("--benchmark-max-runtime-sec", type=_positive_float, default=120.0)
+    p.add_argument("--benchmark-max-rss-mb", type=_positive_float, default=4096.0)
+    p.add_argument("--benchmark-no-ascii", action="store_true")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--no-invert", action="store_true")
     p.add_argument("--strict-tactile", action="store_true", help="fail tactile-mode export when tactile validation reports errors")
@@ -137,10 +160,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--braille-target-density", type=_unit_float, default=None)
     a = p.parse_args(argv)
     if a.benchmark:
-        rows = run_benchmark_suite(output_dir=Path(a.benchmark_csv).parent or Path('.'))
-        write_benchmark_csv(rows, a.benchmark_csv)
-        _print_json({'benchmark_csv': a.benchmark_csv, 'rows': rows})
-        return 0
+        return _run_benchmark(a)
     if a.brf_preflight is not None:
         return _run_brf_preflight(a)
     if a.brf_preflight_batch is not None:
