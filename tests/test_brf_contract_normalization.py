@@ -3,13 +3,18 @@ from pathlib import Path
 
 from braille_dotmatrix_engine.brf_batch import resolve_brf_input_paths, validate_brf_files
 from braille_dotmatrix_engine.brf_contract import batch_contract_from_report, main, write_batch_contract_from_report
+from braille_dotmatrix_engine.embosser import build_embosser_profile
 
 EXAMPLES = Path('examples/brf')
 SNAPSHOT = EXAMPLES / 'snapshots' / 'batch_examples.json'
 
 
+def _example_batch():
+    return validate_brf_files(resolve_brf_input_paths(EXAMPLES, '*.txt'), build_embosser_profile('a4-40x25'))
+
+
 def test_batch_contract_from_report_matches_checked_in_snapshot():
-    batch = validate_brf_files(resolve_brf_input_paths(EXAMPLES, '*.txt'))
+    batch = _example_batch()
     report = {'mode': 'BRF_PREFLIGHT_BATCH', 'batch': batch}
     expected = json.loads(SNAPSHOT.read_text(encoding='utf-8'))
 
@@ -22,7 +27,7 @@ def test_batch_contract_from_contract_is_idempotent():
 
 
 def test_write_batch_contract_from_report(tmp_path):
-    batch = validate_brf_files(resolve_brf_input_paths(EXAMPLES, '*.txt'))
+    batch = _example_batch()
     report = tmp_path / 'report.json'
     output = tmp_path / 'contract.json'
     report.write_text(json.dumps({'batch': batch}), encoding='utf-8')
@@ -34,7 +39,7 @@ def test_write_batch_contract_from_report(tmp_path):
 
 
 def test_cli_writes_batch_contract(tmp_path):
-    batch = validate_brf_files(resolve_brf_input_paths(EXAMPLES, '*.txt'))
+    batch = _example_batch()
     report = tmp_path / 'report.json'
     output = tmp_path / 'contract.json'
     report.write_text(json.dumps({'batch': batch}), encoding='utf-8')

@@ -6,7 +6,7 @@ The project converts images into a physical 2x4 dot lattice and multiple text/vi
 
 ## Current version
 
-`v1.27.0`
+`v1.28.0`
 
 ## Status
 
@@ -28,7 +28,7 @@ This repository is currently in the **V1 engineering prototype** stage:
 - JSON contract fixtures for BRF report regression tests
 - BRF batch contract normalization for generated reports
 - structured JSON report diff helper for contract drift review
-- non-blocking CI report-drift artifact generation
+- blocking BRF contract drift policy after diagnostic artifact upload
 - SHA-256 artifact provenance manifest generation
 - BRF batch CI report artifact upload with provenance manifest
 - benchmark profiles for smoke, medium, and stress image sizes
@@ -41,14 +41,14 @@ This repository is currently in the **V1 engineering prototype** stage:
 - deterministic seed path for density correction
 - CI test scaffold
 
-### v1.27.0 report diff CI notes
+### v1.28.0 blocking drift policy notes
 
-- Added `braille_dotmatrix_engine.brf_contract`.
-- Added `batch_contract_from_report()` and `write_batch_contract_from_report()`.
-- Added `python -m braille_dotmatrix_engine.brf_contract` CLI entry point.
-- CI now normalizes generated `brf_batch_report.json` into `brf_batch_contract.json`.
-- CI now generates `report_diff.json` against `examples/brf/snapshots/batch_examples.json`.
-- Drift diff generation is non-blocking while the drift policy is still being finalized.
+- Added `braille_dotmatrix_engine.report_diff_policy`.
+- Added `evaluate_report_diff_policy()` and `write_report_diff_policy()`.
+- Added `python -m braille_dotmatrix_engine.report_diff_policy` CLI entry point.
+- CI now writes `drift_policy.json` from `report_diff.json`.
+- CI uploads report, contract, diff, drift policy, and provenance before enforcing the blocking drift gate.
+- Drift becomes blocking only after diagnostic artifacts are generated and uploaded.
 
 ## Install
 
@@ -82,6 +82,12 @@ Compare two JSON reports:
 braille-dotmatrix --report-diff-old examples/brf/snapshots/batch_examples.json --report-diff-new artifacts/brf/brf_batch_contract.json --report-json artifacts/brf/report_diff.json --report-diff-print-summary
 ```
 
+Evaluate and enforce a report diff policy:
+
+```bash
+python -m braille_dotmatrix_engine.report_diff_policy artifacts/brf/report_diff.json --output artifacts/brf/drift_policy.json --enforce
+```
+
 Generate a SHA-256 artifact provenance manifest:
 
 ```bash
@@ -101,10 +107,12 @@ from pathlib import Path
 import json
 from braille_dotmatrix_engine.brf_contract import write_batch_contract_from_report
 from braille_dotmatrix_engine.report_diff import diff_reports
+from braille_dotmatrix_engine.report_diff_policy import evaluate_report_diff_policy
 
 contract = write_batch_contract_from_report("artifacts/brf/brf_batch_report.json", "artifacts/brf/brf_batch_contract.json")
 expected = json.loads(Path("examples/brf/snapshots/batch_examples.json").read_text(encoding="utf-8"))
-print(diff_reports(expected, contract)["summary"])
+diff = diff_reports(expected, contract)
+print(evaluate_report_diff_policy(diff)["status"])
 ```
 
 ## JSON contracts
@@ -139,7 +147,7 @@ Package version, render schema version, BRF schema version, and benchmark schema
 pytest -q
 ```
 
-CI additionally runs the configured Ruff correctness gate, package build, wheel install smoke, pytest matrix, BRF batch report artifact generation, BRF contract normalization, non-blocking report diff generation, BRF provenance manifest generation, and benchmark smoke.
+CI additionally runs the configured Ruff correctness gate, package build, wheel install smoke, pytest matrix, BRF batch report artifact generation, BRF contract normalization, report diff generation, drift policy evaluation, BRF provenance manifest generation, blocking drift enforcement, and benchmark smoke.
 
 ## License
 
