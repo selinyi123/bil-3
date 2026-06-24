@@ -75,6 +75,11 @@ jobs:
             --report-diff-new artifacts/brf/brf_batch_contract.json \
             --report-json artifacts/brf/report_diff.json \
             --report-diff-print-summary
+      - name: Evaluate BRF drift policy
+        run: |
+          python -m braille_dotmatrix_engine.report_diff_policy \
+            artifacts/brf/report_diff.json \
+            --output artifacts/brf/drift_policy.json
       - name: Generate BRF artifact provenance manifest
         run: |
           python -m braille_dotmatrix_engine.artifact_provenance \
@@ -98,16 +103,19 @@ jobs:
 
           contract = json.loads(Path('artifacts/brf/brf_batch_contract.json').read_text(encoding='utf-8'))
           diff = json.loads(Path('artifacts/brf/report_diff.json').read_text(encoding='utf-8'))
+          drift_policy = json.loads(Path('artifacts/brf/drift_policy.json').read_text(encoding='utf-8'))
           assert 'aggregate' in contract
           assert 'files' in contract
           assert 'counts' in diff
           assert 'summary' in diff
+          assert drift_policy['policy'] == 'blocking'
+          assert drift_policy['status'] == 'pass'
 
           provenance = json.loads(Path('artifacts/brf/provenance_manifest.json').read_text(encoding='utf-8'))
           assert provenance['label'] == 'brf-batch-report'
           assert provenance['algorithm'] == 'sha256'
-          assert provenance['file_count'] == 3
-          assert {item['path'] for item in provenance['files']} == {'brf_batch_report.json', 'brf_batch_contract.json', 'report_diff.json'}
+          assert provenance['file_count'] == 4
+          assert {item['path'] for item in provenance['files']} == {'brf_batch_report.json', 'brf_batch_contract.json', 'report_diff.json', 'drift_policy.json'}
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -117,9 +125,15 @@ jobs:
             artifacts/brf/brf_batch_report.json
             artifacts/brf/brf_batch_contract.json
             artifacts/brf/report_diff.json
+            artifacts/brf/drift_policy.json
             artifacts/brf/provenance_manifest.json
           if-no-files-found: error
           retention-days: 7
+      - name: Enforce BRF contract drift policy
+        run: |
+          python -m braille_dotmatrix_engine.report_diff_policy \
+            artifacts/brf/report_diff.json \
+            --enforce
 
   benchmark-smoke:
     runs-on: ubuntu-latest
