@@ -9,6 +9,17 @@ from .json_utils import dumps_json, write_json
 
 __all__ = ["batch_contract_from_report", "write_batch_contract_from_report"]
 
+AGGREGATE_CONTRACT_KEYS = (
+    "total_files",
+    "ok_files",
+    "warning_files",
+    "error_files",
+    "issue_files",
+    "warning_count",
+    "error_count",
+    "by_reason",
+)
+
 
 def _file_name(item: dict[str, Any]) -> str:
     if "name" in item:
@@ -18,13 +29,17 @@ def _file_name(item: dict[str, Any]) -> str:
     return ""
 
 
+def _aggregate_contract(aggregate: dict[str, Any]) -> dict[str, Any]:
+    return {key: aggregate[key] for key in AGGREGATE_CONTRACT_KEYS}
+
+
 def batch_contract_from_report(report: dict[str, Any]) -> dict[str, Any]:
     """Return the stable BRF batch contract shape used by checked-in JSON fixtures."""
     batch = report.get("batch", report)
     if "aggregate" not in batch or "files" not in batch:
         raise ValueError("expected BRF batch report or contract with aggregate and files fields")
     return {
-        "aggregate": batch["aggregate"],
+        "aggregate": _aggregate_contract(batch["aggregate"]),
         "files": [
             {
                 "name": _file_name(item),
