@@ -78,8 +78,12 @@ def validate_config(cfg: BrailleArtConfig) -> None:
 
     output_width_cells = _require_int_positive("output_width_cells", cfg.output_width_cells)
     _require_int_positive("render_spacing_px", cfg.render_spacing_px)
+    max_input_pixels = _require_int_positive("max_input_pixels", cfg.max_input_pixels)
+    max_input_file_bytes = _require_int_positive("max_input_file_bytes", cfg.max_input_file_bytes)
     max_output_width_cells = _require_int_positive("max_output_width_cells", cfg.max_output_width_cells)
     _require_int_positive("max_total_dots", cfg.max_total_dots)
+    if max_input_pixels <= 0 or max_input_file_bytes <= 0:
+        raise ValueError("input resource limits must be positive")
     if output_width_cells > max_output_width_cells:
         raise ValueError("output_width_cells must not exceed max_output_width_cells")
 
