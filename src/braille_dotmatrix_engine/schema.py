@@ -11,7 +11,7 @@ def _resolve_package_version() -> str:
 
 
 PACKAGE_VERSION = _resolve_package_version()
-RENDER_SCHEMA_VERSION = "1.11"
+RENDER_SCHEMA_VERSION = "1.12"
 BRF_SCHEMA_VERSION = "1.1"
 BENCHMARK_SCHEMA_VERSION = "1.12"
 
