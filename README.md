@@ -6,7 +6,7 @@ The project converts images into a physical 2x4 dot lattice and multiple text/vi
 
 ## Current version
 
-`v1.23.0`
+`v1.24.0`
 
 ## Status
 
@@ -30,14 +30,15 @@ This repository is currently in the **V1 engineering prototype** stage:
 - ASCII charset presets, ASCII PNG previews, and optional HTML export
 - centralized render, BRF, and benchmark schema constants
 - centralized configuration validation before rendering
+- input image file-size and pixel-count resource limits
 - shared runtime direct-API validation helpers
 - tactile output validation for spacing, active-dot collisions, and occupancy
 - deterministic seed path for density correction
 - CI test scaffold
 
-### v1.23.x schema notes
+### v1.24.x schema notes
 
-- Render report schema remains `1.11`.
+- Render report schema is `1.12` because input resource limits are included in render config reports.
 - BRF-specific reports use `brf_schema_version`.
 - Benchmark reports use their own benchmark schema version.
 - Package version, render schema, BRF schema, and benchmark schema are intentionally independent.
@@ -68,10 +69,10 @@ Recursively scan a directory:
 braille-dotmatrix --brf-preflight-batch examples/brf --brf-batch-recursive --brf-batch-pattern "*.txt" --report-json artifacts/brf_batch_recursive_report.json
 ```
 
-Run smoke benchmarks:
+Run smoke benchmarks with CSV and summary artifacts:
 
 ```bash
-braille-dotmatrix --benchmark --benchmark-csv artifacts/benchmark.csv
+braille-dotmatrix --benchmark --benchmark-csv artifacts/benchmark.csv --benchmark-summary artifacts/benchmark_summary.json
 ```
 
 ## Python API
