@@ -51,7 +51,7 @@ def test_process_image_ascii_report(tmp_path):
         tmp_path / 'ascii.txt',
         tmp_path / 'report.json',
     )
-    assert report['schema_version'] == '1.11'
+    assert report['schema_version'] == '1.12'
     assert report['package_version']
     assert report['renderer']['strategy'] == 'AsciiMonoRenderer'
     assert report['ascii_render']['backend'] == 'ASCII_MONO'
