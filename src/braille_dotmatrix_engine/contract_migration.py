@@ -19,16 +19,19 @@ DEFAULT_REVIEW_CHECKLIST = (
 __all__ = ["CONTRACT_MIGRATION_SCHEMA_VERSION", "propose_contract_migration", "write_contract_migration"]
 
 
-def _changed_paths(diff: dict[str, Any], *, limit: int = 100) -> list[str]:
+def _changed_paths(diff: dict[str, Any], *, limit: int = 100) -> tuple[list[str], bool]:
     paths: list[str] = []
+    truncated = False
     for key in ("added", "removed", "changed"):
         for item in diff.get(key, []):
             path = str(item.get("path", ""))
-            if path:
-                paths.append(path)
+            if not path:
+                continue
             if len(paths) >= limit:
-                return paths
-    return paths
+                truncated = True
+                continue
+            paths.append(path)
+    return paths, truncated
 
 
 def propose_contract_migration(
@@ -45,6 +48,7 @@ def propose_contract_migration(
     normalized_reason = reason.strip()
     if drift_count > 0 and not normalized_reason:
         raise ValueError("contract migration reason is required when drift exists")
+    changed_paths, changed_paths_truncated = _changed_paths(diff, limit=max_changed_paths)
     status = "no_change" if drift_count == 0 else "migration_required"
     return {
         "schema": "braille-dotmatrix-engine.contract_migration",
@@ -57,8 +61,8 @@ def propose_contract_migration(
         "drift_count": drift_count,
         "summary": diff["summary"],
         "counts": diff["counts"],
-        "changed_paths": _changed_paths(diff, limit=max_changed_paths),
-        "changed_paths_truncated": len(_changed_paths(diff, limit=max_changed_paths + 1)) > max_changed_paths,
+        "changed_paths": changed_paths,
+        "changed_paths_truncated": changed_paths_truncated,
         "review_checklist": list(DEFAULT_REVIEW_CHECKLIST),
         "diff": diff,
     }
