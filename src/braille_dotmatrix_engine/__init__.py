@@ -6,6 +6,7 @@ from .artifacts import artifact_manifest, legacy_artifact_paths, prepare_artifac
 from .artifact_provenance import PROVENANCE_SCHEMA_VERSION, build_artifact_provenance_manifest, sha256_file, write_artifact_provenance_manifest
 from .brf import BRAILLE_ASCII_BY_CHAR, BRAILLE_ASCII_BY_MASK, BrfExportResult, attach_brf_artifact_to_report, unicode_braille_to_brf_text, write_brf_text
 from .brf_contract import batch_contract_from_report, write_batch_contract_from_report
+from .contract_migration import CONTRACT_MIGRATION_SCHEMA_VERSION, propose_contract_migration, write_contract_migration
 from .embosser import (
     EMBOSSER_PROFILE_PRESETS,
     GenericEmbosserProfile,
@@ -70,6 +71,9 @@ __all__ = [
     'write_brf_text',
     'batch_contract_from_report',
     'write_batch_contract_from_report',
+    'CONTRACT_MIGRATION_SCHEMA_VERSION',
+    'propose_contract_migration',
+    'write_contract_migration',
     'EMBOSSER_PROFILE_PRESETS',
     'GenericEmbosserProfile',
     'build_embosser_profile',
