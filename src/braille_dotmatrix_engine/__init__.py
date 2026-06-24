@@ -23,6 +23,7 @@ from .braille_quality import analyze_braille_quality, apply_density_control
 from .geometry import compensated_dot_radius_mm, dot_radius_report
 from .renderers import RenderContext, RenderResult, get_renderer, renderer_names
 from .report_diff import diff_reports, summarize_diff
+from .report_diff_policy import REPORT_DIFF_POLICY_SCHEMA_VERSION, evaluate_report_diff_policy, write_report_diff_policy
 from .reports import adapt_render_report, base_render_report
 from .schema import BENCHMARK_SCHEMA_VERSION, BRF_SCHEMA_VERSION, PACKAGE_VERSION, RENDER_SCHEMA_VERSION
 from .validation import VALID_DITHER_METHODS, VALID_RENDER_MODES, validate_config
@@ -90,6 +91,9 @@ __all__ = [
     'renderer_names',
     'diff_reports',
     'summarize_diff',
+    'REPORT_DIFF_POLICY_SCHEMA_VERSION',
+    'evaluate_report_diff_policy',
+    'write_report_diff_policy',
     'adapt_render_report',
     'base_render_report',
     'PACKAGE_VERSION',
