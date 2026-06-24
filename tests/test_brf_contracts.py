@@ -3,6 +3,7 @@ from pathlib import Path
 
 from braille_dotmatrix_engine.brf import validate_brf_text
 from braille_dotmatrix_engine.brf_batch import resolve_brf_input_paths, validate_brf_files
+from braille_dotmatrix_engine.embosser import build_embosser_profile
 
 EXAMPLES = Path('examples/brf')
 CONTRACTS = EXAMPLES / 'snapshots'
@@ -83,5 +84,5 @@ def test_non_braille_warning_contract():
 
 def test_batch_examples_contract():
     paths = resolve_brf_input_paths(EXAMPLES, '*.txt')
-    report = validate_brf_files(paths)
+    report = validate_brf_files(paths, build_embosser_profile('a4-40x25'))
     assert _batch_contract(report) == _load_contract(CONTRACTS / 'batch_examples.json')
