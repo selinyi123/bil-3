@@ -22,14 +22,24 @@ def _verify_command(path: str, repository: str) -> str:
     return f"gh attestation verify {path} -R {repository}"
 
 
-def build_release_verification_checklist(plan: dict[str, Any], *, repository: str, artifact_prefix: str = "artifacts/release") -> dict[str, Any]:
+def _artifact_prefix(plan: dict[str, Any], artifact_prefix: str | None) -> str:
+    if artifact_prefix is not None:
+        return artifact_prefix.rstrip("/")
+    artifact_dir = plan.get("artifact_dir")
+    if artifact_dir is None:
+        return "artifacts/release"
+    return str(artifact_dir).rstrip("/")
+
+
+def build_release_verification_checklist(plan: dict[str, Any], *, repository: str, artifact_prefix: str | None = None) -> dict[str, Any]:
     subjects = plan.get("subjects", [])
     if not isinstance(subjects, list):
         raise ValueError("release attestation plan must contain a subjects list")
+    resolved_prefix = _artifact_prefix(plan, artifact_prefix)
     checks = []
     for item in subjects:
         path = str(item["path"])
-        artifact_path = f"{artifact_prefix.rstrip('/')}/{path}"
+        artifact_path = f"{resolved_prefix}/{path}"
         checks.append({
             "path": path,
             "artifact_path": artifact_path,
@@ -41,7 +51,7 @@ def build_release_verification_checklist(plan: dict[str, Any], *, repository: st
         "schema": "braille-dotmatrix-engine.release_verification",
         "schema_version": RELEASE_VERIFICATION_SCHEMA_VERSION,
         "repository": repository,
-        "artifact_prefix": artifact_prefix.rstrip("/"),
+        "artifact_prefix": resolved_prefix,
         "subject_count": len(checks),
         "checks": checks,
         "online_verification_note": DEFAULT_ONLINE_NOTE,
@@ -56,7 +66,7 @@ def build_release_verification_checklist(plan: dict[str, Any], *, repository: st
     }
 
 
-def write_release_verification_checklist(plan_path: str | Path, output_path: str | Path, *, repository: str, artifact_prefix: str = "artifacts/release") -> dict[str, Any]:
+def write_release_verification_checklist(plan_path: str | Path, output_path: str | Path, *, repository: str, artifact_prefix: str | None = None) -> dict[str, Any]:
     checklist = build_release_verification_checklist(_load_plan(plan_path), repository=repository, artifact_prefix=artifact_prefix)
     write_json(checklist, output_path)
     return checklist
@@ -67,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("plan", help="release_attestation_plan.json path")
     parser.add_argument("--output", required=True, help="release verification checklist JSON output path")
     parser.add_argument("--repository", required=True, help="owner/repository used by gh attestation verify")
-    parser.add_argument("--artifact-prefix", default="artifacts/release", help="path prefix used in verification commands")
+    parser.add_argument("--artifact-prefix", default=None, help="optional path prefix override used in verification commands; defaults to artifact_dir from the plan")
     args = parser.parse_args(argv)
     checklist = write_release_verification_checklist(args.plan, args.output, repository=args.repository, artifact_prefix=args.artifact_prefix)
     print(dumps_json(checklist))
